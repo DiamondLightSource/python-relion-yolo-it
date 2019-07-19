@@ -1,7 +1,7 @@
 """
 Input an mrc or tiff file using 'ccpem-python ex_header.py -i FILE_NAME'. Output will show camera type and, 
 depending on available metadata, whether the camera is running in linear or counting mode. If an extended 
-header is available it will also output a range of useful parameters.
+header is available it will also output a range of useful parameters if -e flag is given.
 """
 import mrcfile as mrc
 import sys
@@ -11,6 +11,7 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-i", "--input", help="Input file name")
+parser.add_argument("-e", "--extended", action='store_true',  help="Output extended information")
 args = parser.parse_args()
 infile = args.input
 ext = os.path.splitext(infile)[1]
@@ -52,13 +53,14 @@ Fal_dim_super = Fal_dim * 4
 
 
 def metadata_mrc(doc, labels):
-"""Data output when mrc extended header is available"""
+	"""Data output when mrc extended header is available"""
 	for category, x in labels.items():
-		print category,":", doc[0][x]
 		metadata[category] = doc[0][x]
+		if args.extended:
+			print category,":", doc[0][x]
 
 	# Unknown Value
-	print doc[0][19], "<----- What is this?"
+	#print doc[0][19], "<----- What is this?"
 
 	if metadata['Direct Detector Electron Counting']: linMod = 'In counting mode'
 	else: linMod = 'In linear mode'
@@ -70,7 +72,7 @@ def metadata_mrc(doc, labels):
 	print linMod
 
 def metadata_frames(doc_header, labels):
-"""Data output when mrc extended header is not available"""
+	"""Data output when mrc extended header is not available"""
 	nx = doc_header.nx
 	ny = doc_header.ny
 	size = nx * ny
