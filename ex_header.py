@@ -57,10 +57,10 @@ def metadata_mrc(doc, labels):
 	for category, x in labels.items():
 		metadata[category] = doc[0][x]
 		if args.extended:
-			print category,":", doc[0][x]
+			print(category,":", doc[0][x])
 
 	# Unknown Value
-	#print doc[0][19], "<----- What is this?"
+	#print(doc[0][19], "<----- What is this?")
 
 	if metadata['Direct Detector Electron Counting']: linMod = 'In counting mode'
 	else: linMod = 'In linear mode'
@@ -69,7 +69,7 @@ def metadata_mrc(doc, labels):
 	ny = metadata['ny']
 	size = nx * ny 
 	camera_type(size)
-	print linMod
+	print(linMod)
 
 def metadata_frames(doc_header, labels):
 	"""Data output when mrc extended header is not available"""
@@ -77,7 +77,7 @@ def metadata_frames(doc_header, labels):
 	ny = doc_header.ny
 	size = nx * ny
 	camera_type(size)
-	print 'No extended header data.'
+	print('No extended header data.')
 	
 
 def camera_type(size):
@@ -90,7 +90,7 @@ def camera_type(size):
 	elif size  == Fal_dim_super: 	detect = 'Falcon III'; res = 'Super Resolution'
 	else: detect = 'Unsure of detector'; res = ''
 
-	print detect, res
+	print(detect, res)
 
 
 # Main
@@ -101,7 +101,7 @@ try:
 			ny = f.size[1]
 			size = nx * ny
 			camera_type(size)
-			print 'No extended header data.'
+			print('No extended header data.')
 	else:
 		with mrc.open(infile, permissive = True, header_only = True) as f:
 			doc_header = f.header
@@ -111,15 +111,15 @@ try:
 		else: 
 			metadata_mrc(doc, labels)
 except IOError:
-	print "Error: {}: No such file".format(infile)
+	print("Error: {}: No such file".format(infile))
 	sys.exit()
 except TypeError:
-	print "No input file given. Please run as 'ccpem-python ex_header.py -i FILE_NAME'."
+	print("No input file given. Please run as 'ccpem-python ex_header.py -i FILE_NAME'.")
 	sys.exit()
 except AttributeError:
-	print "Error: {}: Does not appear to be an MRC or tiff file".format(infile)
+	print("Error: {}: Does not appear to be an MRC or tiff file".format(infile))
 	sys.exit()
 except:
-   	print "Unexpected error:", sys.exc_info()[0]
+   	print("Unexpected error:", sys.exc_info()[0])
     	raise
 	sys.exit()
