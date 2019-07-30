@@ -76,6 +76,8 @@ def metadata_mrc(doc, labels):
 
 def metadata_frames(doc_header, labels):
     """Data output when mrc extended header is not available"""
+    if args.extended:
+	print(doc_header)
     nx = doc_header.nx
     ny = doc_header.ny
     size = nx * ny
