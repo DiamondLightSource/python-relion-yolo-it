@@ -1,7 +1,8 @@
 """
-Input an mrc or tiff file using 'ccpem-python ex_header.py -i FILE_NAME'. Output will show camera type and, 
-depending on available metadata, whether the camera is running in linear or counting mode. If an extended 
-header is available it will also output a range of useful parameters if -e flag is given.
+Input an mrc or tiff file using 'ccpem-python ex_header.py -i FILE_NAME'.
+Output will show camera type and, depending on available metadata, whether
+the camera is running in linear or counting mode. If an extended header is
+available it will also output a range of useful parameters if -e flag is given.
 """
 import mrcfile as mrc
 import sys
@@ -77,7 +78,7 @@ def metadata_mrc(doc, labels):
 def metadata_frames(doc_header, labels):
     """Data output when mrc extended header is not available"""
     if args.extended:
-	print(doc_header)
+        print(doc_header)
     nx = doc_header.nx
     ny = doc_header.ny
     size = nx * ny
