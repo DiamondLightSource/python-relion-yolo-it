@@ -1,15 +1,21 @@
-#!/usr/bin/env python2.7
+#!/dls_sw/apps/EM/conda/envs/cryolo/bin/python
+'''
+This is the cryolo preprocessing pipeline run from relion_it script. This script first executes the relion_it pipeline up to picking - cryolo then runs through external_cryolo_3.py and its output is used by relion extraction. All executions of this script after the first run in the background and in parallel to the relion_it script.
+
+As with the relion_it script, if RUNNING_RELION_IT is deleted then this script will stop.
+'''
 import os
 import time
 import argparse
 import ast
 import sys
 import runpy
-sys.path.append('/dls/ebic/data/staff-scratch/Donovan/Engine')
 
 import relion_it_editted
+cryolo_relion_directory = '/home/yig62234/Documents/pythonEM/Cryolo_relion3.0/'
 
 def main():
+    # When this script is run in the background a few arguments and options need to be parsed
     opts = relion_it_editted.RelionItOptions()
 
     queue_options = ['Submit to queue? == Yes',
@@ -41,6 +47,9 @@ def main():
     
 
 def RunJobsCry(num_repeats, runjobs, motioncorr_job, ctffind_job, opts, ipass, queue_options):
+    ''' 
+    Very similar to relion_it preprocessing pipeline with the autopicker. Extract and select jobs are identical.
+    '''
     # Constants
     PIPELINE_STAR = 'default_pipeline.star'
     RUNNING_FILE = 'RUNNING_RELION_IT'
@@ -54,22 +63,31 @@ def RunJobsCry(num_repeats, runjobs, motioncorr_job, ctffind_job, opts, ipass, q
     # print ' RELION_IT: this pipeliner will run in the background of your shell. You can stop it by deleting the file RUNNING_PIPELINER_'+preprocess_schedule_name
 
     for i in range(0, num_repeats):
+        if not os.path.exists('RUNNING_RELION_IT'):
+            print('Exiting cryolo pipeline')
+            exit
         preprocess_schedule_name = 'BEFORE_CRYOLO'
         # Running jobs up until picking
         relion_it_editted.RunJobs(runjobs, 1, 1, preprocess_schedule_name)
-        relion_it_editted.WaitForJob(motioncorr_job, 20)
-        relion_it_editted.WaitForJob(ctffind_job, 20)
+        relion_it_editted.WaitForJob(motioncorr_job, 15)
+        relion_it_editted.WaitForJob(ctffind_job, 15)
         cryolo_options = ['--in_mics {}'.format(os.path.join(ctffind_job + 'micrographs_ctf.star')),
                             '--o {}'.format('External'),
-                            '--box_size {}'.format(opts.cryolo_boxsize),
+                            '--box_size {}'.format(opts.extract_boxsize),
                             '--threshold {}'.format(opts.cryolo_threshold)]
         option_string = ''
         for cry_option in cryolo_options:
             option_string += cry_option
             option_string += ' '
-        command = '~/Documents/pythonEM/Cryolo_relion3.0/external_cryolo_3.py ' + option_string
+        if os.path.exists('ExternalFine/DONE'):
+            option_string += "--in_model 'ExternalFine/model.h5'"
+        command = os.path.join(cryolo_relion_directory, 'external_cryolo_3.py') + ' ' + option_string
         print(' RELION_IT: RUNNING {}'.format(command))
         os.system(command)
+
+        if not os.path.exists('RUNNING_RELION_IT'):
+            print('Exiting cryolo pipeline')
+            exit
 
         #### Set up the Extract job
         extract_options = ['Input coordinates:  == {}_crypick.star'.format('External/'),

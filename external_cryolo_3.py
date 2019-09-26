@@ -1,11 +1,11 @@
 #!/dls/ebic/data/staff-scratch/Donovan/anaconda/envs/cry_rel/bin/python
 """
-External job for calling cryolo within Relion 3.1
+External job for calling cryolo within Relion 3.0
 in_mics are the micrographs to be picked on
-in_coords is the model to be used, empty will use general model!
+in_model is the model to be used, empty will use general model!
 
 Run in main Relion project directory
-external_cryolo.py --o $PATH_WHERE_TO_STORE --in_mics $PATH_TO_MCORR/CTF_STARFILE --box_size $BOX_SIZE --threshold 0.3 (optional: --in_coords $PATH_TO_MODEL)
+external_cryolo.py --o $PATH_WHERE_TO_STORE --in_mics $PATH_TO_MCORR/CTF_STARFILE --box_size $BOX_SIZE --threshold 0.3 (optional: --in_model $PATH_TO_MODEL)
 eg:
 external_cryolo_3.py --o "External" --in_mics "CtfFind/job004/micrographs_ctf.star" --box_size 300 --threshold 0.3
 """
@@ -19,9 +19,11 @@ import sys
 import shutil
 import correct_path_relion
 import pathlib
+import time
 
 import gemmi
 
+qsub_file = '/home/yig62234/Documents/pythonEM/Cryolo_relion3.0/qsub.sh'
 
 def run_job(project_dir, job_dir, args_list):
     # print("Project directory is {}".format(project_dir))
@@ -32,15 +34,16 @@ def run_job(project_dir, job_dir, args_list):
     parser.add_argument("--j", dest="threads", help="Number of threads to run (ignored)")
     parser.add_argument("--box_size", help="Size of box (~ particle size)")
     parser.add_argument("--threshold", help="Threshold for picking (default = 0.3)")
-    parser.add_argument("--in_coords", help="model from previous job")
+    parser.add_argument("--in_model", help="model from previous job")
     args = parser.parse_args(args_list)
     thresh = args.threshold
     box_size = args.box_size
     
     try:
-        model = os.path.join(project_dir, args.in_coords)
-        print(model)
+        model = os.path.join(project_dir, args.in_model)
     except: pass
+    
+        
 
     # Making a cryolo config file with the correct box size
     with open('/dls_sw/apps/EM/crYOLO/cryo_phosaurus/config.json', 'r') as json_file:
@@ -56,23 +59,35 @@ def run_job(project_dir, job_dir, args_list):
     try:
         os.mkdir('cryolo_input')
     except: 
+        try:
+            with open('done_mics.txt', 'a+') as f:
+                for micrograph in os.listdir('cryolo_input'):
+                    f.write(micrograph + '\n')
+        except: pass
         shutil.rmtree('cryolo_input')
         os.mkdir('cryolo_input')
 
     # Arranging files for cryolo to predict particles from
+    try:
+        with open('done_mics.txt', 'r') as f:
+            done_mics = f.read().splitlines()
+    except: done_mics = []
     for micrograph in data_as_dict['_rlnmicrographname']:
-        try:
-            os.link(os.path.join(project_dir, micrograph), os.path.join(project_dir, job_dir, 'cryolo_input', os.path.split(micrograph)[-1]))
-        except: pass
-            # print('{} already exists'.format(micrograph))
-        # print(os.path.join(project_dir, job_dir, 'cryolo_input', os.path.split(micrograph)[-1]))
-        # print(os.path.join(project_dir, micrograph))
+        if os.path.split(micrograph)[-1] not in done_mics:
+            try:
+                os.link(os.path.join(project_dir, micrograph), os.path.join(project_dir, job_dir, 'cryolo_input', os.path.split(micrograph)[-1]))
+            except: pass
 
     # Checking to see if a paticular model has been specified
-    if args.in_coords is None:
-        os.system(f"cryolo_predict.py -c config.json -i {os.path.join(project_dir, job_dir, 'cryolo_input')} -o {os.path.join(project_dir, job_dir, 'gen_pick')} -w /dls_sw/apps/EM/crYOLO/cryo_phosaurus/gmodel_phosnet_20190516.h5 -g 0 -t {thresh}")
+    if args.in_model is None:
+        os.system(f"{qsub_file} cryolo_predict.py -c config.json -i {os.path.join(project_dir, job_dir, 'cryolo_input')} -o {os.path.join(project_dir, job_dir, 'gen_pick')} -w /dls_sw/apps/EM/crYOLO/cryo_phosaurus/gmodel_phosnet_20190516.h5 -g 0 -t {thresh}")
     else:
-        os.system(f"cryolo_predict.py -c config.json -i {os.path.join(project_dir, job_dir, 'cryolo_input')} -o {os.path.join(project_dir, job_dir, 'gen_pick')} -w {model} -g 0 -t {thresh}")
+        print('Running from model {}'.format(model))
+        os.system(f"{qsub_file} cryolo_predict.py -c config.json -i {os.path.join(project_dir, job_dir, 'cryolo_input')} -o {os.path.join(project_dir, job_dir, 'gen_pick')} -w {model} -g 0 -t {thresh}")
+    ### WAIT FOR DONEFILE! ###
+    while not os.path.exists('.cry_predict_done'):
+        time.sleep(1)
+    os.remove('.cry_predict_done')
     try:
         os.mkdir('picked_stars')
     except: pass
@@ -111,7 +126,7 @@ def main():
     known_args, other_args = parser.parse_known_args()
     project_dir = os.getcwd()
     try: 
-        os.mkdir('External')
+        os.mkdir(known_args.out_dir)
     except: pass
         # print('External exists')
     os.chdir(known_args.out_dir)
