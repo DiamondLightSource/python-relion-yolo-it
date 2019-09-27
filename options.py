@@ -62,7 +62,7 @@ autopick_do_cryolo = True
 # Threshold for cryolo autopicking (higher the threshold the more *discriminative the cryolo picker) ((* But beware it may still not be picking what you want! ))
 cryolo_threshold = 0.3
 # Finetune the cryolo general model by selecting good classes from 2D classification
-cryolo_finetune = True
+cryolo_finetune = False
 
 
 ### Extract parameters
@@ -108,8 +108,6 @@ class3d_ini_lowpass = 40
 
 ### Use the largest 3D class from the first batch as a 3D reference for a second pass of autopicking? (only when do_class3d is True)
 do_second_pass = True
-if autopick_do_cryolo:
-    do_second_pass = False
 # Only move on to template-based autopicking if the 3D references achieves this resolution (in A)
 minimum_resolution_3dref_2ndpass = 20
 # In the second pass, perform 2D classification?

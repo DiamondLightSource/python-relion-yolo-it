@@ -10,19 +10,16 @@ import argparse
 import ast
 import sys
 import runpy
+import subprocess
 
 import relion_it_editted
 cryolo_relion_directory = '/home/yig62234/Documents/pythonEM/Cryolo_relion3.0/'
 
 def main():
     # When this script is run in the background a few arguments and options need to be parsed
+    OPTIONS_FILE = 'relion_it_options.py'  
     opts = relion_it_editted.RelionItOptions()
 
-    queue_options = ['Submit to queue? == Yes',
-                     'Queue name:  == {}'.format(opts.queue_name),
-                     'Queue submit command: == {}'.format(opts.queue_submit_command),
-                     'Standard submission script: == {}'.format(opts.queue_submission_template),
-                     'Minimum dedicated cores per node: == {}'.format(opts.queue_minimum_dedicated)]
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--num_repeats")
@@ -31,17 +28,28 @@ def main():
     parser.add_argument("--ctffind_job")
     parser.add_argument("--ipass")
     parser.add_argument("--user_opt_files")
+    parser.add_argument("--gui")
     args = parser.parse_args()
     num_repeats    = int(args.num_repeats)
     runjobs        = ast.literal_eval(args.runjobs)
     motioncorr_job = args.motioncorr_job
     ctffind_job    = args.ctffind_job
     ipass          = int(args.ipass)
+    gui            = int(args.gui)
 
     option_files = ast.literal_eval(args.user_opt_files)
+    if gui == 1:
+        option_files.append(OPTIONS_FILE)
+
     for user_opt_file in option_files:
         user_opts = runpy.run_path(user_opt_file)
         opts.update_from(user_opts)
+
+    queue_options = ['Submit to queue? == Yes',
+                     'Queue name:  == {}'.format(opts.queue_name),
+                     'Queue submit command: == {}'.format(opts.queue_submit_command),
+                     'Standard submission script: == {}'.format(opts.queue_submission_template),
+                     'Minimum dedicated cores per node: == {}'.format(opts.queue_minimum_dedicated)]
 
     RunJobsCry(num_repeats, runjobs, motioncorr_job, ctffind_job, opts, ipass, queue_options)
     
@@ -57,7 +65,6 @@ def RunJobsCry(num_repeats, runjobs, motioncorr_job, ctffind_job, opts, ipass, q
     SETUP_CHECK_FILE = 'RELION_IT_SUBMITTED_JOBS'
     PREPROCESS_SCHEDULE_PASS1 = 'PREPROCESS'
     PREPROCESS_SCHEDULE_PASS2 = 'PREPROCESS_PASS2'
-    OPTIONS_FILE = 'relion_it_options.py'  
 
     # print ' RELION_IT: submitted',preprocess_schedule_name,'pipeliner with', opts.preprocess_repeat_times,'repeats of the preprocessing jobs'
     # print ' RELION_IT: this pipeliner will run in the background of your shell. You can stop it by deleting the file RUNNING_PIPELINER_'+preprocess_schedule_name
@@ -84,6 +91,7 @@ def RunJobsCry(num_repeats, runjobs, motioncorr_job, ctffind_job, opts, ipass, q
         command = os.path.join(cryolo_relion_directory, 'external_cryolo_3.py') + ' ' + option_string
         print(' RELION_IT: RUNNING {}'.format(command))
         os.system(command)
+        #subprocess.Popen('/home/yig62234/Documents/testprogs/liveplotting.py')
 
         if not os.path.exists('RUNNING_RELION_IT'):
             print('Exiting cryolo pipeline')
