@@ -1,4 +1,5 @@
-#!/dls_sw/apps/EM/conda/envs/cryolo/bin/python
+#!/dls_sw/apps/python/anaconda/4.6.14/64/envs/cryolo/bin/python
+# testing
 """
 relion_it.py
 ============
@@ -268,7 +269,8 @@ import traceback
 import sys
 
 
-cryolo_relion_directory = '/home/yig62234/Documents/pythonEM/Cryolo_relion3.0/'
+cryolo_relion_directory = '/dls_sw/apps/EM/relion_cryolo/CryoloRelion-master/'
+#cryolo_relion_directory = '/home/yig62234/Documents/pythonEM/Cryolo_relion3.0'
 sys.path.append(cryolo_relion_directory)
 
 import subprocess
@@ -364,7 +366,7 @@ class RelionItOptions(object):
     # OR:
     #
     # Run Cryolo picking or autopicking
-    autopick_do_cryolo = False
+    autopick_do_cryolo = True
     # Threshold for cryolo autopicking (higher the threshold the more *discriminative the cryolo picker) ((* But beware it may still not be picking what you want! ))
     cryolo_threshold = 0.3
     # Finetune the cryolo general model by selecting good classes from 2D classification
@@ -829,6 +831,13 @@ class RelionItGui(object):
 
         row += 1
 
+        tk.Label(particle_frame, text="MotionCor binning:").grid(row=row, sticky=tk.W)
+        self.motioncor_binning_entry = tk.Entry(particle_frame)
+        self.motioncor_binning_entry.grid(row=row, column=1, sticky=tk.W+tk.E, columnspan=2)
+        self.motioncor_binning_entry.insert(0, str(options.motioncor_binning))
+
+        row += 1
+
         tk.Label(particle_frame, text=u"Mask diameter (\u212B):").grid(row=row, sticky=tk.W)
         self.mask_diameter_var = tk.StringVar()  # for data binding
         self.mask_diameter_entry = tk.Entry(particle_frame, textvariable=self.mask_diameter_var)
@@ -1101,6 +1110,30 @@ class RelionItGui(object):
         second_pass_button.config(command=update_pipeline_control_state)
         self.ref_3d_var.trace('w', update_pipeline_control_state)
 
+        # Initial blanking of buttons
+        if self.stop_after_ctf_var.get():
+            use_cryolo_button.config(state=tk.DISABLED)
+            cryolo_fine_button.config(state=tk.DISABLED)
+            second_pass_button.config(state=tk.DISABLED)
+            class2d_pass2_button.config(state=tk.DISABLED)
+            class3d_pass2_button.config(state=tk.DISABLED)
+            class2d_button.config(state=tk.DISABLED)
+            class3d_button.config(state=tk.DISABLED)
+            use_cryolo_button.config(state=tk.DISABLED)
+            cryolo_fine_button.config(state=tk.DISABLED)
+            self.particle_max_diam_entry.config(state=tk.DISABLED)
+            self.particle_min_diam_entry.config(state=tk.DISABLED)
+            self.ref_3d_entry.config(state=tk.DISABLED)
+            # Update the box size controls with care to avoid activating them when we shouldn't
+            auto_boxsize_button.config(state=tk.DISABLED)
+
+        if not self.use_cryolo_var.get():
+            cryolo_fine_button.config(state=tk.DISABLED)
+        else:
+            second_pass_button.config(state=tk.DISABLED)
+            class2d_pass2_button.config(state=tk.DISABLED)
+            class3d_pass2_button.config(state=tk.DISABLED)
+
         ###
 
         button_frame = tk.Frame(right_frame)
@@ -1140,6 +1173,13 @@ class RelionItGui(object):
         opts.do_second_pass = self.get_var_as_bool(self.second_pass_var)
         opts.do_class2d_pass2 = self.get_var_as_bool(self.class2d_pass2_var)
         opts.do_class3d_pass2 = self.get_var_as_bool(self.class3d_pass2_var)
+
+        try:
+            opts.motioncor_binning = float(self.motioncor_binning_entry.get())
+        except ValueError:
+            raise ValueError("MotionCor binning must be a number")
+        if opts.motioncor_binning <= 0.0:
+            warnings.append("- MotionCor binning should be a positive number")
 
         try:
             opts.voltage = float(self.voltage_entry.get())
@@ -1788,9 +1828,9 @@ def run_pipeline(opts):
             #### CRYOLO INSERT BEGIN ####
             else:
                 done_fine_tune = 0
-                split_job = RunJobsCryolo.RunJobsCry(1, runjobs, motioncorr_job, ctffind_job, opts, ipass, queue_options)
+                split_job, manpick_job = RunJobsCryolo.RunJobsCry(1, runjobs, motioncorr_job, ctffind_job, opts, ipass, queue_options, 'None')
                 # Running cryolo pipeline as a background process so that Relion_it script can carry on to Class2D etc.
-                subprocess.Popen([os.path.join(cryolo_relion_directory, 'RunJobsCryolo.py'), '--num_repeats', '{}'.format(opts.preprocess_repeat_times), '--runjobs', "{}".format(runjobs), '--motioncorr_job', motioncorr_job, '--ctffind_job', ctffind_job, '--ipass', '{}'.format(ipass), '--user_opt_file', "{}".format(option_files), '--gui', '{}'.format(gui)])
+                subprocess.Popen([os.path.join(cryolo_relion_directory, 'RunJobsCryolo.py'), '--num_repeats', '{}'.format(opts.preprocess_repeat_times), '--runjobs', "{}".format(runjobs), '--motioncorr_job', motioncorr_job, '--ctffind_job', ctffind_job, '--ipass', '{}'.format(ipass), '--user_opt_file', "{}".format(option_files), '--gui', '{}'.format(gui), '--manpick_job', manpick_job])
 
             #### CRYOLO INSERT END ####
 
