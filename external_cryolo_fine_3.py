@@ -1,4 +1,4 @@
-#!/dls_sw/apps/EM/conda/envs/cryolo/bin/python
+#!/dls_sw/apps/python/anaconda/4.6.14/64/envs/cryolo/bin/python
 """
 External job for calling cryolo fine tune within Relion 3.0
 in_parts is from a subset selection job.
@@ -16,7 +16,7 @@ import time
 
 import gemmi
 
-qsub_file = '/home/yig62234/Documents/pythonEM/Cryolo_relion3.0/qsub.sh'
+qsub_file = '/dls_sw/apps/EM/relion_cryolo/CryoloRelion-master/qsub.sh'
 
 def run_job(project_dir, job_dir, args_list):
     # print("Project directory is {}".format(project_dir))
@@ -80,7 +80,7 @@ def run_job(project_dir, job_dir, args_list):
     os.remove('.cry_predict_done')
 
     # Writing a star file (This one is meaningless for now)
-    part_doc = open('_crypick.star', 'w')
+    part_doc = open('_manualpick.star', 'w')
     part_doc.write(os.path.join(project_dir, args.in_parts))
     part_doc.close()
 
@@ -88,7 +88,7 @@ def run_job(project_dir, job_dir, args_list):
     out_doc = gemmi.cif.Document()
     output_nodes_block = out_doc.add_new_block('output_nodes')
     loop = output_nodes_block.init_loop('', ['_rlnPipeLineNodeName', '_rlnPipeLineNodeType'])
-    loop.add_row([os.path.join(job_dir, '_crypick.star'), '2'])
+    loop.add_row([os.path.join(job_dir, '_manualpick.star'), '2'])
     out_doc.write_file('RELION_OUTPUT_NODES.star')
     # with open('RELION_OUTPUT_NODES.star') as f:
     #     print(f.read())

@@ -115,7 +115,7 @@ do_class2d_pass2 = True
 # In the second pass, perform 3D classification?
 do_class3d_pass2 = False
 # Batch size in the second pass
-batch_size_pass2 = 100000
+batch_size_pass2 = 20000
 
 
 ###################################################################################
