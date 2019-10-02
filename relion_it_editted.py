@@ -1,5 +1,4 @@
 #!/dls_sw/apps/python/anaconda/4.6.14/64/envs/cryolo/bin/python
-# testing
 """
 relion_it.py
 ============
