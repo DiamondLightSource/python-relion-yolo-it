@@ -1807,7 +1807,7 @@ def run_pipeline(opts):
                 extract_options = ['Input coordinates:  == {}coords_suffix_autopick.star'.format(autopick_job),
                                 'micrograph STAR file:  == {}micrographs_ctf.star'.format(ctffind_job),
                                 'Diameter background circle (pix):  == {}'.format(opts.extract_bg_diameter),
-                                'Particle box size (pix): == {}'.format(opts.extract_boxsize),
+                                'Particle box size (pix): == {}'.format(opts.extract_boxsize / opts.motioncor_binning),
                                 'Number of MPI procs: == {}'.format(opts.extract_mpi)]
 
                 if ipass == 0:

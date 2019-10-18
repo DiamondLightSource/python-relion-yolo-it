@@ -108,17 +108,25 @@ def RunJobsCry(num_repeats, runjobs, motioncorr_job, ctffind_job, opts, ipass, q
             manualpick_alias = 'cryolo_picks'
             manpick_job, already_had_it  = relion_it_editted.addJob('ManualPick', manualpick_job_name, SETUP_CHECK_FILE, manpick_options, alias=manualpick_alias)
             relion_it_editted.RunJobs([manpick_job], 1, 1, 'ManualPick')
+            
+        # wait for Manpick to make movies directory tree
+        wait_count = 0
+        while not os.path.exists(os.path.join(manpick_job, 'Movies')):
+            if wait_count > 15:
+                # but dont wait too long as not too important
+                break
+            time.sleep(2)
+            wait_count += 1
 
-        try:
+        if wait_count <= 15:
             shutil.rmtree(os.path.join(manpick_job, 'Movies'))
-        except: pass
-        shutil.copytree('External/Movies', os.path.join(manpick_job, 'Movies'))
+            shutil.copytree('External/Movies', os.path.join(manpick_job, 'Movies'))
 
         #### Set up the Extract job
         extract_options = ['Input coordinates:  == {}_manualpick.star'.format('External/'),
                         'micrograph STAR file:  == {}micrographs_ctf.star'.format(ctffind_job),
                         'Diameter background circle (pix):  == {}'.format(opts.extract_bg_diameter),
-                        'Particle box size (pix): == {}'.format(opts.extract_boxsize),
+                        'Particle box size (pix): == {}'.format(opts.extract_boxsize / opts.motioncor_binning),
                         'Number of MPI procs: == {}'.format(opts.extract_mpi)]
 
         if ipass == 0:
