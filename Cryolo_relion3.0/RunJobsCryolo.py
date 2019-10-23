@@ -14,14 +14,15 @@ import subprocess
 import shutil
 
 import relion_it_editted
+##### SPECIFIC TO FACILITY ######
 cryolo_relion_directory = '/dls_sw/apps/EM/relion_cryolo/CryoloRelion-master/'
 #cryolo_relion_directory = '/home/yig62234/Documents/pythonEM/Cryolo_relion3.0'
+#################################
 
 def main():
     # When this script is run in the background a few arguments and options need to be parsed
     OPTIONS_FILE = 'relion_it_options.py'  
     opts = relion_it_editted.RelionItOptions()
-
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--num_repeats")
@@ -69,9 +70,6 @@ def RunJobsCry(num_repeats, runjobs, motioncorr_job, ctffind_job, opts, ipass, q
     SETUP_CHECK_FILE = 'RELION_IT_SUBMITTED_JOBS'
     PREPROCESS_SCHEDULE_PASS1 = 'PREPROCESS'
     PREPROCESS_SCHEDULE_PASS2 = 'PREPROCESS_PASS2'
-
-    # print ' RELION_IT: submitted',preprocess_schedule_name,'pipeliner with', opts.preprocess_repeat_times,'repeats of the preprocessing jobs'
-    # print ' RELION_IT: this pipeliner will run in the background of your shell. You can stop it by deleting the file RUNNING_PIPELINER_'+preprocess_schedule_name
 
     for i in range(0, num_repeats):
         if not os.path.exists('RUNNING_RELION_IT'):
@@ -123,6 +121,7 @@ def RunJobsCry(num_repeats, runjobs, motioncorr_job, ctffind_job, opts, ipass, q
         if wait_count <= 15:
             try:
                 shutil.rmtree(os.path.join(manpick_job, movies_dir))
+                # Multiple reasons this could fail... Not crucial
             except:
                 pass
             shutil.copytree(os.path.join('External', movies_dir), os.path.join(manpick_job, movies_dir))
