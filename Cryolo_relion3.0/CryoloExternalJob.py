@@ -89,9 +89,9 @@ def run_job(project_dir, job_dir, args_list):
     if relion_it_config.use_cluster:
         os.system(f"{qsub_file} cryolo_predict.py -c config.json -i {os.path.join(project_dir, job_dir, 'cryolo_input')} -o {os.path.join(project_dir, job_dir, 'gen_pick')} -w {model} -g 0 -t {thresh}")
         ### WAIT FOR DONEFILE! ###
-        while not os.path.exists('.cry_predict_done'):
+        while not os.path.exists('.cry_done'):
             time.sleep(1)
-        os.remove('.cry_predict_done')
+        os.remove('.cry_done')
     else:
         os.system(f"cryolo_predict.py -c config.json -i {os.path.join(project_dir, job_dir, 'cryolo_input')} -o {os.path.join(project_dir, job_dir, 'gen_pick')} -w {model} -g 0 -t {thresh}")
 
