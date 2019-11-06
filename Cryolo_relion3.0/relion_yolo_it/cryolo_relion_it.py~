@@ -270,15 +270,9 @@ import json
 import numpy as np
 import grp
 
-import relion_it_config
-
-cryolo_relion_directory = relion_it_config.cryolo_relion_directory
-# cryolo_relion_directory = '/home/yig62234/Documents/pythonEM/Cryolo_relion3.0'
-sys.path.append(cryolo_relion_directory)
-
 import gemmi
 
-import CryoloPipeline
+from relion_yolo_it import CryoloPipeline
 
 try:
     import tkinter as tk
@@ -373,6 +367,15 @@ class RelionItOptions(object):
     # Finetune the cryolo general model by selecting good classes from 2D classification
     cryolo_finetune = False
 
+    # Location of the cryolo specific files
+    cryolo_config = '/dls_sw/apps/EM/crYOLO/cryo_phosaurus/config.json'
+    cryolo_gmodel = '/dls_sw/apps/EM/crYOLO/cryo_phosaurus/gmodel_phosnet_20190516.h5'
+
+    # Cluster options for cryolo
+    cryolo_use_cluster = True
+    cryolo_qsub_file = '/dls_sw/apps/EM/relion_cryolo/CryoloRelion-master/qsub.sh'
+
+
 
     ### Extract parameters
     # Box size of particles in the averaged micrographs (in pixels) (Also used for cryolo boxsize)
@@ -466,7 +469,9 @@ class RelionItOptions(object):
     motioncor_gainflip = 'No flipping (0)'
     motioncor_gainrot = 'No rotation (0)'
     # Other arguments for MotionCor2
-    motioncor_other_args = '--do_at_most 15'
+    motioncor2_other_args = ''
+    # Other arguments for Motion Correction
+    motioncor_other_args = '--do_at_most 40'
     # Submit motion correction job to the cluster?
     motioncor_submit_to_queue = True
     
@@ -561,7 +566,7 @@ class RelionItOptions(object):
     # Use GPU-acceleration?
     refine_do_gpu = True
     # Which GPU to use (different from GPU used for pre-processing?)
-    refine_gpu = '0'
+    refine_gpu = ''
     # How many MPI processes to use
     refine_mpi = 5
     # How many threads to use
@@ -576,7 +581,7 @@ class RelionItOptions(object):
 
     ### 2D classification parameters
     # Wait with the first 2D classification batch until at least this many particles are extracted
-    minimum_batch_size = 500
+    minimum_batch_size = 250
     # Number of iterations to perform in 2D classification
     class2d_nr_iter = 20
     # Rotational search step (in degrees)
@@ -1591,6 +1596,8 @@ def run_pipeline(opts):
     else:
         nr_passes = 1
 
+    iteration_3D = 0
+
     # if SECONDPASS_REF3D_FILE exists, go straight into the second pass
     first_pass = 0
     if opts.do_second_pass:
@@ -1643,9 +1650,10 @@ def run_pipeline(opts):
                                   'Bfactor: ==  {}'.format(opts.motioncor_bfactor),
                                   'Binning factor: == {}'.format(opts.motioncor_binning),
                                   'Which GPUs to use: == {}'.format(opts.motioncor_gpu),
-                                  'Other MOTIONCOR2 arguments == {}'.format(opts.motioncor_other_args),
+                                  'Other MOTIONCOR2 arguments == {}'.format(opts.motioncor2_other_args),
                                   'Number of threads: == {}'.format(opts.motioncor_threads),
-                                  'Number of MPI procs: == {}'.format(opts.motioncor_mpi)]
+                                  'Number of MPI procs: == {}'.format(opts.motioncor_mpi),
+                                  'Additional arguments: == {}'.format(opts.motioncor_other_args)]
 
             if (opts.motioncor_do_own):
                 motioncorr_options.append('Use RELION\'s own implementation? == Yes')
@@ -1833,7 +1841,7 @@ def run_pipeline(opts):
                 done_fine_tune = False
                 split_job, manpick_job = CryoloPipeline.RunJobsCry(1, runjobs, motioncorr_job, ctffind_job, opts, ipass, queue_options, 'None')
                 # Running cryolo pipeline as a background process so that Relion_it script can carry on to Class2D etc.
-                subprocess.Popen([os.path.join(cryolo_relion_directory, 'CryoloPipeline.py'), '--num_repeats', '{}'.format(opts.preprocess_repeat_times), '--runjobs', "{}".format(runjobs), '--motioncorr_job', motioncorr_job, '--ctffind_job', ctffind_job, '--ipass', '{}'.format(ipass), '--user_opt_file', "{}".format(option_files), '--gui', '{}'.format(gui), '--manpick_job', manpick_job])
+                subprocess.Popen(['CryoloPipeline.py', '--num_repeats', '{}'.format(opts.preprocess_repeat_times), '--runjobs', "{}".format(runjobs), '--motioncorr_job', motioncorr_job, '--ctffind_job', ctffind_job, '--ipass', '{}'.format(ipass), '--user_opt_file', "{}".format(option_files), '--gui', '{}'.format(gui), '--manpick_job', manpick_job])
 
             #### CRYOLO INSERT END ####
 
@@ -2014,22 +2022,29 @@ def run_pipeline(opts):
                                         print('Enough micrographs to retrain!')
                                         cryolo_fineoptions = ['--in_parts {}'.format(fine_particles_star_file),
                                                             '--o {}'.format('ExternalFine'),
-                                                            '--box_size {}'.format(opts.extract_boxsize)]
+                                                            '--box_size {}'.format(opts.extract_boxsize),
+                                                            '--qsub {}'.format(opts.cryolo_qsub_file),
+                                                            '--gmodel {}'.format(opts.cryolo_gmodel),
+                                                            '--config {}'.format(opts.cryolo_config),
+                                                            '--cluster {}'.format(opts.cryolo_use_cluster)]
                                         option_string = ''
                                         for cry_option in cryolo_fineoptions:
                                             option_string += cry_option
                                             option_string += ' '
-                                        command = os.path.join(cryolo_relion_directory,'CryoloFineTuneJob.py') + ' ' + option_string
+                                        command = 'CryoloFineTuneJob.py' + ' ' + option_string
                                         print(' RELION_IT: RUNNING {}'.format(command))
 
 					# Run in background so relion_it can carry on processing new data. Training can take a while...
-                                        subprocess.Popen([os.path.join(cryolo_relion_directory, 'CryoloFineTuneJob.py'), '--in_parts', fine_particles_star_file, '--o', 'ExternalFine', '--box_size', '{}'.format(opts.extract_boxsize)])
+                                        subprocess.Popen(['CryoloFineTuneJob.py', '--in_parts', fine_particles_star_file, '--o', 'ExternalFine', '--box_size', '{}'.format(opts.extract_boxsize)])
 
                                 ### END CRYOLO FINE ###
                                 
 
                     # Perform 3D classification
-                    if (ipass == 0 and opts.do_class3d) or (ipass == 1 and opts.do_class3d_pass2):
+                    if iteration_3D < 4 and ((ipass == 0 and opts.do_class3d) or (ipass == 1 and opts.do_class3d_pass2)):
+
+                        # Only repeat 3D classification 3 times as computationally expensive
+                        iteration_3D += 1
 
                         # Do SGD initial model generation only in the first pass, when no reference is provided AND only for the first (complete) batch, for subsequent batches use that model
                         if (not opts.have_3d_reference) and ipass == 0 and iibatch == 1 and batch_size == opts.batch_size:

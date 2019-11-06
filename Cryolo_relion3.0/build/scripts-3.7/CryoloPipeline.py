@@ -1,4 +1,4 @@
-#!/dls_sw/apps/python/anaconda/4.6.14/64/envs/cryolo/bin/python
+#!python
 '''
 This is the cryolo preprocessing pipeline run from relion_it script. This script first executes the relion_it pipeline up to picking - cryolo then runs through CryoloExternalJob.py and its output is used by relion extraction. All executions of this script after the first run in the background and in parallel to the relion_it script.
 
@@ -13,13 +13,9 @@ import runpy
 import subprocess
 import shutil
 
-import cryolo_relion_it
-import relion_it_config
+from relion_yolo_it import cryolo_relion_it
+from relion_yolo_it import relion_it_config
 
-##### SPECIFIC TO FACILITY ######
-cryolo_relion_directory = relion_it_config.cryolo_relion_directory
-# cryolo_relion_directory = '/home/yig62234/Documents/pythonEM/Cryolo_relion3.0'
-#################################
 
 def main():
     # When this script is run in the background a few arguments and options need to be parsed
@@ -92,7 +88,7 @@ def RunJobsCry(num_repeats, runjobs, motioncorr_job, ctffind_job, opts, ipass, q
             option_string += ' '
         if os.path.exists('ExternalFine/DONE'):
             option_string += "--in_model 'ExternalFine/model.h5'"
-        command = os.path.join(cryolo_relion_directory, 'CryoloExternalJob.py') + ' ' + option_string
+        command = 'CryoloExternalJob.py' + ' ' + option_string
         print(' RELION_IT: RUNNING {}'.format(command))
         os.system(command)
 
@@ -103,7 +99,8 @@ def RunJobsCry(num_repeats, runjobs, motioncorr_job, ctffind_job, opts, ipass, q
         #### Set up manual pick job
         if num_repeats == 1: 
             # In order to visualise cry picked particles
-            manpick_options = ['Input micrographs: == {}micrographs_ctf.star'.format(ctffind_job)]
+            manpick_options = ['Input micrographs: == {}micrographs_ctf.star'.format(ctffind_job),
+                               'Particle diameter (A): == {}'.format(opts.extract_boxsize / opts.motioncor_binning)]
             manualpick_job_name = 'cryolo_picks'
             manualpick_alias = 'cryolo_picks'
             manpick_job, already_had_it  = cryolo_relion_it.addJob('ManualPick', manualpick_job_name, SETUP_CHECK_FILE, manpick_options, alias=manualpick_alias)

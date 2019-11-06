@@ -1,4 +1,4 @@
-#!/dls_sw/apps/python/anaconda/4.6.14/64/envs/cryolo/bin/python
+#!python
 """
 External job for calling cryolo within Relion 3.0
 in_mics are the micrographs to be picked on
@@ -22,8 +22,8 @@ import time
 
 import gemmi
 
-import CorrectPath
-import relion_it_config
+from relion_yolo_it import CorrectPath
+from relion_yolo_it import relion_it_config
 
 ##### SPECIFIC TO FACILITY ######
 # cluster submit script
@@ -89,9 +89,9 @@ def run_job(project_dir, job_dir, args_list):
     if relion_it_config.use_cluster:
         os.system(f"{qsub_file} cryolo_predict.py -c config.json -i {os.path.join(project_dir, job_dir, 'cryolo_input')} -o {os.path.join(project_dir, job_dir, 'gen_pick')} -w {model} -g 0 -t {thresh}")
         ### WAIT FOR DONEFILE! ###
-        while not os.path.exists('.cry_done'):
+        while not os.path.exists('.cry_predict_done'):
             time.sleep(1)
-        os.remove('.cry_done')
+        os.remove('.cry_predict_done')
     else:
         os.system(f"cryolo_predict.py -c config.json -i {os.path.join(project_dir, job_dir, 'cryolo_input')} -o {os.path.join(project_dir, job_dir, 'gen_pick')} -w {model} -g 0 -t {thresh}")
 
