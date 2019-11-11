@@ -7,7 +7,7 @@ from setuptools import setup, find_packages
 requirements = ["gemmi==0.2.8", "numpy==1.14.5"]
 setup_requirements = []
 
-with open("README.md", "r") as fh:
+with open("README.txt", "r") as fh:
     long_description = fh.read()
 
 
@@ -22,7 +22,7 @@ setup(
     ],
     description="Updated relion_it with cryolo wrappers",
     long_description=long_description,
-    long_description_content_type='text/markdown',
+    long_description_content_type='text/plain',
     install_requires=requirements,
     license="GPLv2",
     include_package_data=True,
@@ -30,12 +30,11 @@ setup(
     scripts=[
         "relion_yolo_it/cryolo_relion_it.py",
         "relion_yolo_it/CryoloPipeline.py",
-        "relion_yolo_it/CryoloExternalJob.py",
-        "relion_yolo_it/CryoloFineTuneJob.py"
+        "relion_yolo_it/CryoloExternalJob.py"
     ],
     python_requires='==3.6.8',
     setup_requires=setup_requirements,
-    version="0.2.5",
+    version="0.2.2",
     zip_safe=False,
 )
 
