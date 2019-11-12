@@ -35,7 +35,7 @@ setup(
     ],
     python_requires='==3.6.8',
     setup_requires=setup_requirements,
-    version="0.2.5",
+    version="0.2.8",
     zip_safe=False,
 )
 
