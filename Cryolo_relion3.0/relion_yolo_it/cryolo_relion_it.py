@@ -1297,11 +1297,14 @@ class RelionItGui(object):
         if opts.autopick_do_cryolo:
             opts.do_second_pass = False
 
+        # Not sure why this was here
+        '''
         # Now set a sensible batch size (leaving batch_size_pass2 at its default 100,000)
         if opts.do_second_pass:
             opts.batch_size = 10000
         else:
             opts.batch_size = 10000
+        '''
 
     def save_options(self):
         """
