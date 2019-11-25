@@ -2,7 +2,7 @@
 """
 External job for calling cryolo fine tune within Relion 3.0
 in_parts is from a subset selection job.
-CryoloFineTuneJob.py --o 'ExternalFine' --in_parts 'Select/job005/particles.star' --box_size 300
+CryoloFineTuneJob.py --o 'ExternalFine' --in_parts 'Select/job005/particles.star' --box_size 300 --qsub '/dls_sw/apps/EM/relion_cryolo/CryoloRelion-master/qsub.sh' --gmodel '/dls_sw/apps/EM/crYOLO/cryo_phosaurus/gmodel_phosnet_20190516.h5' --config '/dls_sw/apps/EM/crYOLO/cryo_phosaurus/config.json' --cluster True
 """
 
 import argparse
@@ -60,9 +60,9 @@ def run_job(project_dir, job_dir, args_list):
 
     # Arranging files for cryolo to train from
     for micro in range(len(data_as_dict['_rlnmicrographname'])):
-        # try:
-        os.link(os.path.join(project_dir, data_as_dict['_rlnmicrographname'][micro]), os.path.join(project_dir, job_dir, 'train_image', os.path.split(data_as_dict['_rlnmicrographname'][micro])[-1]))
-        # except: pass
+        try:
+            os.link(os.path.join(project_dir, data_as_dict['_rlnmicrographname'][micro]), os.path.join(project_dir, job_dir, 'train_image', os.path.split(data_as_dict['_rlnmicrographname'][micro])[-1]))
+        except: pass
 
         box_name = os.path.splitext(os.path.split(data_as_dict['_rlnmicrographname'][micro])[-1])[0] + '.box'
 
