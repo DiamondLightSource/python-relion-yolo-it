@@ -1,7 +1,7 @@
 Metadata-Version: 2.1
 Name: relion-yolo-it
-Version: 0.2.5
-Summary: Updated relion_it with cryolo wrappers
+Version: 0.3.2
+Summary: Updated relion_it with cryolo wrappers for Diamond Light Source
 Home-page: UNKNOWN
 Author: Donovan Webb
 Author-email: donovan.webb@diamond.ac.uk
@@ -20,12 +20,12 @@ Description: # relion_it with crYOLO support
         
         2. Conda Environment for crYOLO and Relion
         
-        3. Edit paths in options.py for your MotionCor2 and Cryolo general model
+        3. Edit paths in options.py for MotionCor2 and Cryolo general model locations
         
-        4. Run by: `cryolo_relion_it.py --gui`
+        4. Run by: `cryolo_relion_it.py /Path/To/options.py --gui`
         
         
-        ## Scripts being use:
+        ## Scripts being used:
         
          - cryolo_relion_it.py: The main script that dls_yolo_relion calls. This houses the main pipeline
                 and calls to all the other scripts.

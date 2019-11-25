@@ -1816,7 +1816,7 @@ def run_pipeline(opts):
 
                 #### Set up the Extract job
                 bin_corrected_box_exact = int(opts.extract_boxsize / opts.motioncor_binning)
-                bin_corrected_box_even = bin_corrected_box_exact + bin_correct_box_exact % 2
+                bin_corrected_box_even = bin_corrected_box_exact + bin_corrected_box_exact % 2
                 extract_options = ['Input coordinates:  == {}coords_suffix_autopick.star'.format(autopick_job),
                                 'micrograph STAR file:  == {}micrographs_ctf.star'.format(ctffind_job),
                                 'Diameter background circle (pix):  == {}'.format(opts.extract_bg_diameter),
@@ -1871,7 +1871,7 @@ def run_pipeline(opts):
                 done_fine_tune = False
                 split_job, manpick_job = CryoloPipeline.RunJobsCry(1, runjobs, motioncorr_job, ctffind_job, opts, ipass, queue_options, 'None')
                 # Running cryolo pipeline as a background process so that Relion_it script can carry on to Class2D etc.
-                subprocess.Popen(['CryoloPipeline.py', '--num_repeats', '{}'.format(opts.preprocess_repeat_times), '--runjobs', "{}".format(runjobs), '--motioncorr_job', motioncorr_job, '--ctffind_job', ctffind_job, '--ipass', '{}'.format(ipass), '--user_opt_file', "{}".format(option_files), '--gui', '{}'.format(gui), '--manpick_job', manpick_job])
+                subprocess.Popen(['eval $RELION_PIPELINE_HOME/CryoloPipeline.py', '--num_repeats', '{}'.format(opts.preprocess_repeat_times), '--runjobs', "{}".format(runjobs), '--motioncorr_job', motioncorr_job, '--ctffind_job', ctffind_job, '--ipass', '{}'.format(ipass), '--user_opt_file', "{}".format(option_files), '--gui', '{}'.format(gui), '--manpick_job', manpick_job])
 
             #### CRYOLO INSERT END ####
 
@@ -2065,7 +2065,7 @@ def run_pipeline(opts):
                                         print(' RELION_IT: RUNNING {}'.format(command))
 
                                         # Run in background so relion_it can carry on processing new data. Training can take a while...
-                                        subprocess.Popen(['CryoloFineTuneJob.py', '--in_parts', fine_particles_star_file, '--o', 'ExternalFine', '--box_size', '{}'.format(opts.extract_boxsize)])
+                                        subprocess.Popen(['eval $RELION_PIPELINE_HOME/CryoloFineTuneJob.py', '--in_parts', fine_particles_star_file, '--o', 'ExternalFine', '--box_size', '{}'.format(opts.extract_boxsize)])
 
                                 ### END CRYOLO FINE ###
                                 

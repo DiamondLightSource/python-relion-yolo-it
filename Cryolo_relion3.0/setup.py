@@ -12,7 +12,7 @@ with open("README.md", "r") as fh:
 
 
 setup(
-    name="dls_relion_yolo_it",
+    name="relion_yolo_it",
     author="Donovan Webb",
     author_email="donovan.webb@diamond.ac.uk",
     classifiers=[
@@ -35,7 +35,7 @@ setup(
     ],
     python_requires='==3.6.8',
     setup_requires=setup_requirements,
-    version="0.1.1",
+    version="0.3.2",
     zip_safe=False,
 )
 
