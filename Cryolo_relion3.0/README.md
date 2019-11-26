@@ -45,4 +45,5 @@ appear as a manual pick job in the relion gui and can be viewed there.
                  '.cry_predict_done' file so that the pipeline knows that cryolo has finished.*
 
 
-Note: Fine-tuning requires good 2D classes to be picked by hand after first 2D iteration
+Note: Fine-tuning requires good 2D classes to be picked by hand after first 2D iteration and may not improve picking performance.
+It is included as an experimental feature and is not recommended for a practical pipeline.
