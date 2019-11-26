@@ -1,11 +1,12 @@
 Metadata-Version: 2.1
 Name: relion-yolo-it
-Version: 0.2.9
+Version: 0.3.0
 Summary: Updated relion_it with cryolo wrappers
-Home-page: UNKNOWN
+Home-page: https://github.com/DonovanWebb/CryoloRelion/tree/pypiLive
 Author: Donovan Webb
 Author-email: donovan.webb@diamond.ac.uk
 License: GPLv2
+Download-URL: https://github.com/DonovanWebb/CryoloRelion/archive/0.3.0.tar.gz
 Description: # relion_it with crYOLO support
         
         relion_it is now running with python 3.6.8!  In options you can choose to pick via the crYOLO
@@ -53,7 +54,8 @@ Description: # relion_it with crYOLO support
                          '.cry_predict_done' file so that the pipeline knows that cryolo has finished.*
         
         
-        Note: Fine-tuning requires good 2D classes to be picked by hand after first 2D iteration
+        Note: Fine-tuning requires good 2D classes to be picked by hand after first 2D iteration and may not improve picking performance.
+        It is included as an experimental feature and is not recommended for a practical pipeline.
         
 Platform: UNKNOWN
 Classifier: Intended Audience :: Science/Research

@@ -15,6 +15,8 @@ setup(
     name="relion_yolo_it",
     author="Donovan Webb",
     author_email="donovan.webb@diamond.ac.uk",
+    url = "https://github.com/DonovanWebb/CryoloRelion/tree/pypiLive",
+    download_url = "https://github.com/DonovanWebb/CryoloRelion/archive/0.3.0.tar.gz",
     classifiers=[
         "Intended Audience :: Science/Research",
         "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",

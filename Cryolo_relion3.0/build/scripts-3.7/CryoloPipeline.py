@@ -14,7 +14,6 @@ import subprocess
 import shutil
 
 from relion_yolo_it import cryolo_relion_it
-from relion_yolo_it import relion_it_config
 
 
 def main():
@@ -80,8 +79,13 @@ def RunJobsCry(num_repeats, runjobs, motioncorr_job, ctffind_job, opts, ipass, q
         cryolo_relion_it.WaitForJob(ctffind_job, 15)
         cryolo_options = ['--in_mics {}'.format(os.path.join(ctffind_job + 'micrographs_ctf.star')),
                             '--o {}'.format('External'),
-                            '--box_size {}'.format(opts.extract_boxsize),
-                            '--threshold {}'.format(opts.cryolo_threshold)]
+                            '--box_size {}'.format(int(opts.extract_boxsize / opts.motioncor_binning)),
+                            '--threshold {}'.format(opts.cryolo_threshold),
+                            '--qsub {}'.format(opts.cryolo_qsub_file),
+                            '--gmodel {}'.format(opts.cryolo_gmodel),
+                            '--config {}'.format(opts.cryolo_config),
+                            '--cluster {}'.format(opts.cryolo_use_cluster)]
+
         option_string = ''
         for cry_option in cryolo_options:
             option_string += cry_option
@@ -126,10 +130,12 @@ def RunJobsCry(num_repeats, runjobs, motioncorr_job, ctffind_job, opts, ipass, q
             shutil.copytree(os.path.join('External', movies_dir), os.path.join(manpick_job, movies_dir))
 
         #### Set up the Extract job
+        bin_corrected_box_exact = int(opts.extract_boxsize / opts.motioncor_binning) 
+        bin_corrected_box_even = bin_corrected_box_exact + bin_correct_box_exact % 2
         extract_options = ['Input coordinates:  == {}_manualpick.star'.format('External/'),
                         'micrograph STAR file:  == {}micrographs_ctf.star'.format(ctffind_job),
                         'Diameter background circle (pix):  == {}'.format(opts.extract_bg_diameter),
-                        'Particle box size (pix): == {}'.format(opts.extract_boxsize / opts.motioncor_binning),
+                        'Particle box size (pix): == {}'.format(bin_corrected_box_even),
                         'Number of MPI procs: == {}'.format(opts.extract_mpi)]
 
         if ipass == 0:

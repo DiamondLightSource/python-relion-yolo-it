@@ -270,8 +270,6 @@ import json
 import numpy as np
 import grp
 
-from relion_yolo_it import relion_it_config
-
 import gemmi
 
 from relion_yolo_it import CryoloPipeline
@@ -369,6 +367,15 @@ class RelionItOptions(object):
     # Finetune the cryolo general model by selecting good classes from 2D classification
     cryolo_finetune = False
 
+    # Location of the cryolo specific files
+    cryolo_config = '/dls_sw/apps/EM/crYOLO/cryo_phosaurus/config.json'
+    cryolo_gmodel = '/dls_sw/apps/EM/crYOLO/cryo_phosaurus/gmodel_phosnet_20190516.h5'
+
+    # Cluster options for cryolo
+    cryolo_use_cluster = True
+    cryolo_qsub_file = '/dls_sw/apps/EM/relion_cryolo/CryoloRelion-master/qsub.sh'
+
+
 
     ### Extract parameters
     # Box size of particles in the averaged micrographs (in pixels) (Also used for cryolo boxsize)
@@ -420,7 +427,7 @@ class RelionItOptions(object):
     # In the second pass, perform 3D classification?
     do_class3d_pass2 = False
     # Batch size in the second pass
-    batch_size_pass2 = 100000
+    batch_size_pass2 = 10000
     
 
     ###################################################################################
@@ -464,7 +471,7 @@ class RelionItOptions(object):
     # Other arguments for MotionCor2
     motioncor2_other_args = ''
     # Other arguments for Motion Correction
-    motioncor_other_args = '--do_at_most 15'
+    motioncor_other_args = '--do_at_most 40'
     # Submit motion correction job to the cluster?
     motioncor_submit_to_queue = True
     
@@ -569,7 +576,7 @@ class RelionItOptions(object):
     # Submit jobs to the cluster?
     refine_submit_to_queue = True
     # Use fast subsets in 2D/3D classification when batch_size is bigger than this
-    refine_batchsize_for_fast_subsets = 100000
+    refine_batchsize_for_fast_subsets = 10000
 
 
     ### 2D classification parameters
@@ -1290,11 +1297,14 @@ class RelionItGui(object):
         if opts.autopick_do_cryolo:
             opts.do_second_pass = False
 
+        # Not sure why this was here
+        '''
         # Now set a sensible batch size (leaving batch_size_pass2 at its default 100,000)
         if opts.do_second_pass:
             opts.batch_size = 10000
         else:
-            opts.batch_size = 100000
+            opts.batch_size = 10000
+        '''
 
     def save_options(self):
         """
@@ -1589,6 +1599,8 @@ def run_pipeline(opts):
     else:
         nr_passes = 1
 
+    iteration_3D = 0
+
     # if SECONDPASS_REF3D_FILE exists, go straight into the second pass
     first_pass = 0
     if opts.do_second_pass:
@@ -1778,10 +1790,12 @@ def run_pipeline(opts):
                 
 
                 #### Set up the Extract job
+                bin_corrected_box_exact = int(opts.extract_boxsize / opts.motioncor_binning) 
+                bin_corrected_box_even = bin_corrected_box_exact + bin_correct_box_exact % 2
                 extract_options = ['Input coordinates:  == {}coords_suffix_autopick.star'.format(autopick_job),
                                 'micrograph STAR file:  == {}micrographs_ctf.star'.format(ctffind_job),
                                 'Diameter background circle (pix):  == {}'.format(opts.extract_bg_diameter),
-                                'Particle box size (pix): == {}'.format(opts.extract_boxsize / opts.motioncor_binning),
+                                'Particle box size (pix): == {}'.format(bin_corrected_box_even),
                                 'Number of MPI procs: == {}'.format(opts.extract_mpi)]
 
                 if ipass == 0:
@@ -2013,22 +2027,29 @@ def run_pipeline(opts):
                                         print('Enough micrographs to retrain!')
                                         cryolo_fineoptions = ['--in_parts {}'.format(fine_particles_star_file),
                                                             '--o {}'.format('ExternalFine'),
-                                                            '--box_size {}'.format(opts.extract_boxsize)]
+                                                            '--box_size {}'.format(opts.extract_boxsize),
+                                                            '--qsub {}'.format(opts.cryolo_qsub_file),
+                                                            '--gmodel {}'.format(opts.cryolo_gmodel),
+                                                            '--config {}'.format(opts.cryolo_config),
+                                                            '--cluster {}'.format(opts.cryolo_use_cluster)]
                                         option_string = ''
                                         for cry_option in cryolo_fineoptions:
                                             option_string += cry_option
                                             option_string += ' '
-                                        command = os.path.join(cryolo_relion_directory,'CryoloFineTuneJob.py') + ' ' + option_string
+                                        command = 'CryoloFineTuneJob.py' + ' ' + option_string
                                         print(' RELION_IT: RUNNING {}'.format(command))
 
-					# Run in background so relion_it can carry on processing new data. Training can take a while...
+                                        # Run in background so relion_it can carry on processing new data. Training can take a while...
                                         subprocess.Popen(['CryoloFineTuneJob.py', '--in_parts', fine_particles_star_file, '--o', 'ExternalFine', '--box_size', '{}'.format(opts.extract_boxsize)])
 
                                 ### END CRYOLO FINE ###
                                 
 
                     # Perform 3D classification
-                    if (ipass == 0 and opts.do_class3d) or (ipass == 1 and opts.do_class3d_pass2):
+                    if iteration_3D < 4 and ((ipass == 0 and opts.do_class3d) or (ipass == 1 and opts.do_class3d_pass2)):
+
+                        # Only repeat 3D classification 3 times as computationally expensive
+                        iteration_3D += 1
 
                         # Do SGD initial model generation only in the first pass, when no reference is provided AND only for the first (complete) batch, for subsequent batches use that model
                         if (not opts.have_3d_reference) and ipass == 0 and iibatch == 1 and batch_size == opts.batch_size:
