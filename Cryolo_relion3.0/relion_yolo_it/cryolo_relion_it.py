@@ -1871,7 +1871,10 @@ def run_pipeline(opts):
                 done_fine_tune = False
                 split_job, manpick_job = CryoloPipeline.RunJobsCry(1, runjobs, motioncorr_job, ctffind_job, opts, ipass, queue_options, 'None')
                 # Running cryolo pipeline as a background process so that Relion_it script can carry on to Class2D etc.
-                subprocess.Popen(['eval $RELION_PIPELINE_HOME/CryoloPipeline.py', '--num_repeats', '{}'.format(opts.preprocess_repeat_times), '--runjobs', "{}".format(runjobs), '--motioncorr_job', motioncorr_job, '--ctffind_job', ctffind_job, '--ipass', '{}'.format(ipass), '--user_opt_file', "{}".format(option_files), '--gui', '{}'.format(gui), '--manpick_job', manpick_job])
+                relion_pipeline_home = os.environ['RELION_PIPELINE_HOME']
+                num_repeats = '{}'.format(opts.preprocess_repeat_times)
+                cry_exec = os.path.join(relion_pipeline_home,'CryoloPipeline.py')
+                subprocess.Popen([cry_exec, '--num_repeats', num_repeats, '--runjobs', "{}".format(runjobs), '--motioncorr_job', motioncorr_job, '--ctffind_job', ctffind_job, '--ipass', '{}'.format(ipass), '--user_opt_file', "{}".format(option_files), '--gui', '{}'.format(gui), '--manpick_job', manpick_job])
 
             #### CRYOLO INSERT END ####
 
@@ -2065,7 +2068,9 @@ def run_pipeline(opts):
                                         print(' RELION_IT: RUNNING {}'.format(command))
 
                                         # Run in background so relion_it can carry on processing new data. Training can take a while...
-                                        subprocess.Popen(['eval $RELION_PIPELINE_HOME/CryoloFineTuneJob.py', '--in_parts', fine_particles_star_file, '--o', 'ExternalFine', '--box_size', '{}'.format(opts.extract_boxsize)])
+                                        relion_pipeline_home = os.environ['RELION_PIPELINE_HOME']
+                                        external_path = os.path.join(relion_pipeline_home, 'CryoloFineTuneJob.py')
+                                        subprocess.Popen([external_path, '--in_parts', fine_particles_star_file, '--o', 'ExternalFine', '--box_size', '{}'.format(opts.extract_boxsize)])
 
                                 ### END CRYOLO FINE ###
                                 
