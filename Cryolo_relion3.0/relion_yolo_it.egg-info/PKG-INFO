@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: relion-yolo-it
-Version: 0.3.0
+Version: 0.3.0.1
 Summary: Updated relion_it with cryolo wrappers
 Home-page: https://github.com/DonovanWebb/CryoloRelion/tree/pypiLive
 Author: Donovan Webb
