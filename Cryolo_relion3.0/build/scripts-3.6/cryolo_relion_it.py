@@ -1297,11 +1297,14 @@ class RelionItGui(object):
         if opts.autopick_do_cryolo:
             opts.do_second_pass = False
 
+        # Not sure why this was here
+        '''
         # Now set a sensible batch size (leaving batch_size_pass2 at its default 100,000)
         if opts.do_second_pass:
             opts.batch_size = 10000
         else:
             opts.batch_size = 10000
+        '''
 
     def save_options(self):
         """
@@ -1787,10 +1790,12 @@ def run_pipeline(opts):
                 
 
                 #### Set up the Extract job
+                bin_corrected_box_exact = int(opts.extract_boxsize / opts.motioncor_binning) 
+                bin_corrected_box_even = bin_corrected_box_exact + bin_corrected_box_exact % 2
                 extract_options = ['Input coordinates:  == {}coords_suffix_autopick.star'.format(autopick_job),
                                 'micrograph STAR file:  == {}micrographs_ctf.star'.format(ctffind_job),
                                 'Diameter background circle (pix):  == {}'.format(opts.extract_bg_diameter),
-                                'Particle box size (pix): == {}'.format(opts.extract_boxsize / opts.motioncor_binning),
+                                'Particle box size (pix): == {}'.format(bin_corrected_box_even),
                                 'Number of MPI procs: == {}'.format(opts.extract_mpi)]
 
                 if ipass == 0:
@@ -2034,7 +2039,7 @@ def run_pipeline(opts):
                                         command = 'CryoloFineTuneJob.py' + ' ' + option_string
                                         print(' RELION_IT: RUNNING {}'.format(command))
 
-					# Run in background so relion_it can carry on processing new data. Training can take a while...
+                                        # Run in background so relion_it can carry on processing new data. Training can take a while...
                                         subprocess.Popen(['CryoloFineTuneJob.py', '--in_parts', fine_particles_star_file, '--o', 'ExternalFine', '--box_size', '{}'.format(opts.extract_boxsize)])
 
                                 ### END CRYOLO FINE ###

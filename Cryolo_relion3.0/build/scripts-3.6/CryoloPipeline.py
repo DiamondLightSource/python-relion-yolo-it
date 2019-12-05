@@ -130,10 +130,12 @@ def RunJobsCry(num_repeats, runjobs, motioncorr_job, ctffind_job, opts, ipass, q
             shutil.copytree(os.path.join('External', movies_dir), os.path.join(manpick_job, movies_dir))
 
         #### Set up the Extract job
+        bin_corrected_box_exact = int(opts.extract_boxsize / opts.motioncor_binning) 
+        bin_corrected_box_even = bin_corrected_box_exact + bin_corrected_box_exact % 2
         extract_options = ['Input coordinates:  == {}_manualpick.star'.format('External/'),
                         'micrograph STAR file:  == {}micrographs_ctf.star'.format(ctffind_job),
                         'Diameter background circle (pix):  == {}'.format(opts.extract_bg_diameter),
-                        'Particle box size (pix): == {}'.format(opts.extract_boxsize / opts.motioncor_binning),
+                        'Particle box size (pix): == {}'.format(bin_corrected_box_even),
                         'Number of MPI procs: == {}'.format(opts.extract_mpi)]
 
         if ipass == 0:

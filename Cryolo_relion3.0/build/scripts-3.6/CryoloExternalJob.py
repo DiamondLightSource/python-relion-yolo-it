@@ -62,7 +62,17 @@ def run_job(project_dir, job_dir, args_list):
     in_doc = gemmi.cif.read_file(os.path.join(project_dir, args.in_mics))
     data_as_dict = json.loads(in_doc.as_json())['#']
 
-    try:
+    if os.path.isdir('cryolo_input'):
+        try:
+            with open('done_mics.txt', 'a+') as f:
+                for micrograph in os.listdir('cryolo_input'):
+                    f.write(micrograph + '\n')
+        except: pass
+        shutil.rmtree('cryolo_input')
+    os.mkdir('cryolo_input')
+
+    '''
+    try: # First pass creates directory, after first 
         os.mkdir('cryolo_input')
     except FileExistsError: 
         # Not crucial so if fails due to any reason just carry on
@@ -73,6 +83,7 @@ def run_job(project_dir, job_dir, args_list):
         except: pass
         shutil.rmtree('cryolo_input')
         os.mkdir('cryolo_input')
+    '''
 
     # Arranging files for cryolo to predict particles from
     # Not crucial so if fails due to any reason just carry on
@@ -91,6 +102,7 @@ def run_job(project_dir, job_dir, args_list):
         ### WAIT FOR DONEFILE! ###
         while not os.path.exists('.cry_predict_done'):
             time.sleep(1)
+            # TODO timeout
         os.remove('.cry_predict_done')
     else:
         os.system(f"cryolo_predict.py -c config.json -i {os.path.join(project_dir, job_dir, 'cryolo_input')} -o {os.path.join(project_dir, job_dir, 'gen_pick')} -w {model} -g 0 -t {thresh}")
