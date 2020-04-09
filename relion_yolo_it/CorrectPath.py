@@ -12,7 +12,6 @@ def correct(ctf_star):
     in_doc = gemmi.cif.read_file(ctf_star)
     data_as_dict = json.loads(in_doc.as_json())['#']
 
-
     for i in range(len(data_as_dict['_rlnctfimage'])):
         name = data_as_dict['_rlnctfimage'][i]
         dirs, ctf_file = os.path.split(name)
@@ -22,9 +21,9 @@ def correct(ctf_star):
         pathlib.Path(full_dir).mkdir(parents=True, exist_ok=True)
         picked_star = os.path.splitext(ctf_file)[0] + '_manualpick.star'
         try:
-            shutil.move(os.path.join('picked_stars',picked_star), os.path.join(full_dir, picked_star))
-        except: 
-            print(f"cryolo found no particles in {picked_star} or already moved")
+            shutil.move(os.path.join('picked_stars', picked_star), os.path.join(full_dir, picked_star))
+        except FileNotFoundError:
+            print(f"cryolo found no particles in {picked_star}")
 
 
 if __name__ == '__main__':
