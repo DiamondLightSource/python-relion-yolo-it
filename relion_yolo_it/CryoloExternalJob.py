@@ -98,7 +98,7 @@ def run_job(project_dir, job_dir, args_list):
     try:
         os.mkdir('picked_stars')
     except FileExistsError: pass
-    
+
     # Arranging files for Relion to use
     for picked in os.listdir(os.path.join(project_dir, job_dir, 'gen_pick', 'STAR')):
         new_name = os.path.splitext(picked)[0]+'_manualpick'+'.star'
@@ -110,7 +110,7 @@ def run_job(project_dir, job_dir, args_list):
     part_doc = open('_manualpick.star', 'w')
     part_doc.write(os.path.join(project_dir, args.in_mics))
     part_doc.close()
-    
+
     # Required star file
     out_doc = gemmi.cif.Document()
     output_nodes_block = out_doc.add_new_block('output_nodes')
@@ -119,7 +119,6 @@ def run_job(project_dir, job_dir, args_list):
     out_doc.write_file('RELION_OUTPUT_NODES.star')
     ctf_star = os.path.join(project_dir, args.in_mics)
     CorrectPath.correct(ctf_star)
-    
 
 
 def main():
@@ -128,7 +127,7 @@ def main():
     parser.add_argument("--o", dest="out_dir", help="Output directory name")
     known_args, other_args = parser.parse_known_args()
     project_dir = os.getcwd()
-    try: 
+    try:
         os.mkdir(known_args.out_dir)
     except FileExistsError: pass
     os.chdir(known_args.out_dir)
@@ -143,4 +142,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

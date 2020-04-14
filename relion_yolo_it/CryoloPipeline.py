@@ -13,13 +13,12 @@ import runpy
 import subprocess
 import shutil
 
-#from relion_yolo_it import cryolo_relion_it
 import cryolo_relion_it
 
 
 def main():
     # When this script is run in the background a few arguments and options need to be parsed
-    OPTIONS_FILE = 'relion_it_options.py'  
+    OPTIONS_FILE = 'relion_it_options.py'
     opts = cryolo_relion_it.RelionItOptions()
 
     parser = argparse.ArgumentParser()
@@ -55,10 +54,10 @@ def main():
                      'Minimum dedicated cores per node: == {}'.format(opts.queue_minimum_dedicated)]
 
     RunJobsCry(num_repeats, runjobs, motioncorr_job, ctffind_job, opts, ipass, queue_options, manpick_job)
-    
+
 
 def RunJobsCry(num_repeats, runjobs, motioncorr_job, ctffind_job, opts, ipass, queue_options, manpick_job):
-    ''' 
+    '''
     Very similar to relion_it preprocessing pipeline with the autopicker. Extract and select jobs are identical.
     '''
     # Constants
@@ -106,7 +105,7 @@ def RunJobsCry(num_repeats, runjobs, motioncorr_job, ctffind_job, opts, ipass, q
             exit
 
         #### Set up manual pick job
-        if num_repeats == 1: 
+        if num_repeats == 1:
             # In order to visualise cry picked particles
             manpick_options = ['Input micrographs: == {}micrographs_ctf.star'.format(ctffind_job),
                                'Particle diameter (A): == {}'.format(opts.extract_boxsize / opts.motioncor_binning)]
@@ -114,7 +113,7 @@ def RunJobsCry(num_repeats, runjobs, motioncorr_job, ctffind_job, opts, ipass, q
             manualpick_alias = 'cryolo_picks'
             manpick_job, already_had_it  = cryolo_relion_it.addJob('ManualPick', manualpick_job_name, SETUP_CHECK_FILE, manpick_options, alias=manualpick_alias)
             cryolo_relion_it.RunJobs([manpick_job], 1, 1, 'ManualPick')
-            
+
         # wait for Manpick to make movies directory tree
         wait_count = 0
         # movies_dir to make sure if they named 'Movies' file differently it wont fail
@@ -168,13 +167,13 @@ def RunJobsCry(num_repeats, runjobs, motioncorr_job, ctffind_job, opts, ipass, q
         if (ipass == 0 and (opts.do_class2d or opts.do_class3d)) or (ipass == 1 and (opts.do_class2d_pass2 or opts.do_class3d_pass2)):
             #### Set up the Select job to split the particle STAR file into batches
             split_options = ['OR select from particles.star: == {}particles.star'.format(extract_job),
-                            'OR: split into subsets? == Yes',
-                            'OR: number of subsets:  == -1']
+                             'OR: split into subsets? == Yes',
+                             'OR: number of subsets:  == -1']
 
             if ipass == 0:
                 split_job_name = 'split_job'
                 split_options.append('Subset size:  == {}'.format(opts.batch_size))
-                split_alias = 'into {}'.format(opts.batch_size) 
+                split_alias = 'into {}'.format(opts.batch_size)
             else:
                 split_job_name = 'split2_job'
                 split_options.append('Subset size:  == {}'.format(opts.batch_size_pass2))
