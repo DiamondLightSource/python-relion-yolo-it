@@ -42,7 +42,7 @@ def run_job(project_dir, job_dir, args_list):
     gen_model = args.gmodel
     conf_file = args.config
     use_cluster = args.cluster
-    
+
     if args.in_model is None:
         model = gen_model
     else:
@@ -64,10 +64,10 @@ def run_job(project_dir, job_dir, args_list):
 
     try:
         os.mkdir('cryolo_input')
-    except FileExistsError: 
+    except FileExistsError:
         # Not crucial so if fails due to any reason just carry on
         try:
-            with open('done_mics.txt', 'a+') as f:
+            with open('done_mics.txt', 'a+') as f:  # Done mics is to ensure that cryolo doesn't pick from already done mics
                 for micrograph in os.listdir('cryolo_input'):
                     f.write(micrograph + '\n')
         except: pass
