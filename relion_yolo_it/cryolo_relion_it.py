@@ -1875,10 +1875,8 @@ def run_pipeline(opts):
                 done_fine_tune = False
                 split_job, manpick_job = CryoloPipeline.RunJobsCry(1, runjobs, motioncorr_job, ctffind_job, opts, ipass, queue_options, 'None')
                 # Running cryolo pipeline as a background process so that Relion_it script can carry on to Class2D etc.
-                import pathlib
-                relion_pipeline_home = pathlib.Path(__file__).parent.absolute()  # Need to find absolute paths to CryoloPipeline file to run with subprocess
                 num_repeats = '{}'.format(opts.preprocess_repeat_times)
-                cry_exec = os.path.join(relion_pipeline_home,'CryoloPipeline.py')
+                cry_exec = os.path.abspath(CryoloPipeline.__file__)  # Need to find absolute paths to CryoloPipeline file to run with subprocess
                 subprocess.Popen([cry_exec, '--num_repeats', num_repeats, '--runjobs', "{}".format(runjobs), '--motioncorr_job', motioncorr_job, '--ctffind_job', ctffind_job, '--ipass', '{}'.format(ipass), '--user_opt_file', "{}".format(option_files), '--gui', '{}'.format(gui), '--manpick_job', manpick_job])
 
             #### CRYOLO INSERT END ####
@@ -2074,8 +2072,7 @@ def run_pipeline(opts):
                                         print(' RELION_IT: RUNNING {}'.format(command))
 
                                         # Run in background so relion_it can carry on processing new data. Training can take a while...
-                                        import pathlib
-                                        relion_pipeline_home = pathlib.Path(__file__).parent.absolute()
+                                        relion_pipeline_home = os.path.abspath(os.path.dirname(CryoloPipeline.__file__))
                                         external_path = os.path.join(relion_pipeline_home, 'CryoloFineTuneJob.py')
                                         subprocess.Popen([external_path, '--in_parts', fine_particles_star_file, '--o', CryoloPipeline.CRYOLO_FINETUNE_JOB_DIR, '--box_size', '{}'.format(opts.extract_boxsize)])
 
