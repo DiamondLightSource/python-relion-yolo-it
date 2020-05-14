@@ -14,15 +14,13 @@ import argparse
 import json
 import os
 import os.path
-import random
-import sys
 import shutil
-import pathlib
 import time
 
 import gemmi
 
 from relion_yolo_it import CorrectPath
+
 
 def run_job(project_dir, job_dir, args_list):
     parser = argparse.ArgumentParser()
@@ -127,9 +125,7 @@ def main():
     parser.add_argument("--o", dest="out_dir", help="Output directory name")
     known_args, other_args = parser.parse_known_args()
     project_dir = os.getcwd()
-    try:
-        os.mkdir(known_args.out_dir)
-    except FileExistsError: pass
+    os.makedirs(known_args.out_dir, exist_ok=True)
     os.chdir(known_args.out_dir)
     try:
         run_job(project_dir, known_args.out_dir, other_args)
@@ -142,3 +138,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
