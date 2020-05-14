@@ -2060,7 +2060,7 @@ def run_pipeline(opts):
                                         # Enough to fine tune
                                         print('Enough micrographs to retrain!')
                                         cryolo_fineoptions = ['--in_parts {}'.format(fine_particles_star_file),
-                                                            '--o {}'.format('ExternalFine'),
+                                                            '--o {}'.format(CryoloPipeline.CRYOLO_FINETUNE_JOB_DIR),
                                                             '--box_size {}'.format(opts.extract_boxsize),
                                                             '--qsub {}'.format(opts.cryolo_qsub_file),
                                                             '--gmodel {}'.format(opts.cryolo_gmodel),
@@ -2077,7 +2077,7 @@ def run_pipeline(opts):
                                         import pathlib
                                         relion_pipeline_home = pathlib.Path(__file__).parent.absolute()
                                         external_path = os.path.join(relion_pipeline_home, 'CryoloFineTuneJob.py')
-                                        subprocess.Popen([external_path, '--in_parts', fine_particles_star_file, '--o', 'ExternalFine', '--box_size', '{}'.format(opts.extract_boxsize)])
+                                        subprocess.Popen([external_path, '--in_parts', fine_particles_star_file, '--o', CryoloPipeline.CRYOLO_FINETUNE_JOB_DIR, '--box_size', '{}'.format(opts.extract_boxsize)])
 
                                 ### END CRYOLO FINE ###
                                 

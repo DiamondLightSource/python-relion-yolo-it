@@ -16,6 +16,10 @@ import shutil
 import cryolo_relion_it
 
 
+CRYOLO_PICK_JOB_DIR = 'External/crYOLO_AutoPick'
+CRYOLO_FINETUNE_JOB_DIR = 'External/crYOLO_FineTune'
+
+
 def main():
     # When this script is run in the background a few arguments and options need to be parsed
     OPTIONS_FILE = 'relion_it_options.py'
@@ -78,7 +82,7 @@ def RunJobsCry(num_repeats, runjobs, motioncorr_job, ctffind_job, opts, ipass, q
         cryolo_relion_it.WaitForJob(motioncorr_job, 15)
         cryolo_relion_it.WaitForJob(ctffind_job, 15)
         cryolo_options = ['--in_mics {}'.format(os.path.join(ctffind_job + 'micrographs_ctf.star')),
-                            '--o {}'.format('External'),
+                            '--o {}'.format(CRYOLO_PICK_JOB_DIR),
                             '--box_size {}'.format(int(opts.extract_boxsize / opts.motioncor_binning)),
                             '--threshold {}'.format(opts.cryolo_threshold),
                             '--qsub {}'.format(opts.cryolo_qsub_file),
@@ -90,8 +94,8 @@ def RunJobsCry(num_repeats, runjobs, motioncorr_job, ctffind_job, opts, ipass, q
         for cry_option in cryolo_options:
             option_string += cry_option
             option_string += ' '
-        if os.path.exists('ExternalFine/DONE'):
-            option_string += "--in_model 'ExternalFine/model.h5'"
+        if os.path.exists(f'{CRYOLO_FINETUNE_JOB_DIR}/DONE'):
+            option_string += f"--in_model '{CRYOLO_FINETUNE_JOB_DIR}/model.h5'"
 
         import pathlib
         relion_pipeline_home = pathlib.Path(__file__).parent.absolute()
@@ -131,12 +135,12 @@ def RunJobsCry(num_repeats, runjobs, motioncorr_job, ctffind_job, opts, ipass, q
                 # Multiple reasons this could fail... Not crucial
             except:
                 pass
-            shutil.copytree(os.path.join('External', movies_dir), os.path.join(manpick_job, movies_dir))
+            shutil.copytree(os.path.join(CRYOLO_PICK_JOB_DIR, movies_dir), os.path.join(manpick_job, movies_dir))
 
         #### Set up the Extract job
         bin_corrected_box_exact = int(opts.extract_boxsize / opts.motioncor_binning)
         bin_corrected_box_even = bin_corrected_box_exact + bin_corrected_box_exact % 2
-        extract_options = ['Input coordinates:  == {}_manualpick.star'.format('External/'),
+        extract_options = ['Input coordinates:  == {}_manualpick.star'.format(CRYOLO_PICK_JOB_DIR + '/'),
                         'micrograph STAR file:  == {}micrographs_ctf.star'.format(ctffind_job),
                         'Diameter background circle (pix):  == {}'.format(opts.extract_bg_diameter),
                         'Particle box size (pix): == {}'.format(bin_corrected_box_even),
