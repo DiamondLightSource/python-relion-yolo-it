@@ -106,7 +106,8 @@ def run_job(project_dir, job_dir, args_list):
         new_name = os.path.splitext(picked)[0]+'_manualpick'+'.star'
         try:
             os.link(os.path.join(project_dir, job_dir, 'gen_pick', 'STAR', picked), os.path.join(project_dir, job_dir, 'picked_stars', new_name))
-        except: pass
+        except FileExistsError:
+            pass
 
     # Writing a star file for Relion
     part_doc = open('_manualpick.star', 'w')

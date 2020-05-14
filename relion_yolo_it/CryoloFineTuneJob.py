@@ -45,6 +45,7 @@ def run_job(project_dir, job_dir, args_list):
 
     # Reading particle star file from relion
     while not os.path.exists(os.path.join(project_dir, args.in_parts)):
+        # TODO: avoid infinite loop here if file name is wrong
         time.sleep(1)
     in_doc = gemmi.cif.read_file(os.path.join(project_dir, args.in_parts))
     data_as_dict = json.loads(in_doc.as_json())['#']
@@ -62,9 +63,10 @@ def run_job(project_dir, job_dir, args_list):
 
     # Arranging files for cryolo to train from
     for micro in range(len(data_as_dict['_rlnmicrographname'])):
-        # try:
-        os.link(os.path.join(project_dir, data_as_dict['_rlnmicrographname'][micro]), os.path.join(project_dir, job_dir, 'train_image', os.path.split(data_as_dict['_rlnmicrographname'][micro])[-1]))
-        # except: pass
+        try:
+            os.link(os.path.join(project_dir, data_as_dict['_rlnmicrographname'][micro]), os.path.join(project_dir, job_dir, 'train_image', os.path.split(data_as_dict['_rlnmicrographname'][micro])[-1]))
+        except FileExistsError:
+            pass
 
         box_name = os.path.splitext(os.path.split(data_as_dict['_rlnmicrographname'][micro])[-1])[0] + '.box'
 
@@ -79,15 +81,15 @@ def run_job(project_dir, job_dir, args_list):
     if use_cluster:
         os.system(f"{qsub_file} cryolo_train.py -c config.json -w 0 -g 0 --fine_tune")
         while not os.path.exists('.cry_done'):
+            # TODO: avoid infinite loop here if job fails
             time.sleep(1)
         os.remove('.cry_done')
     else: 
         os.system(f"cryolo_train.py -c config.json -w 0 -g 0 --fine_tune")
 
     # Writing a star file (This one is meaningless for now)
-    part_doc = open('_manualpick.star', 'w')
-    part_doc.write(os.path.join(project_dir, args.in_parts))
-    part_doc.close()
+    with open('_manualpick.star', 'w') as part_doc:
+        part_doc.write(os.path.join(project_dir, args.in_parts))
 
     # Required star file
     out_doc = gemmi.cif.Document()
