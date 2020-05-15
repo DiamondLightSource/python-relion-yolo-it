@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 cryolo_relion_it.py
-============
+===================
 
 Script for automated, on-the-fly single-particle analysis in RELION 3
 
@@ -2298,9 +2298,9 @@ def main():
 
     print(' RELION_IT: -------------------------------------------------------------------------------------------------------------------')
     print(' RELION_IT: script for automated, on-the-fly single-particle analysis in RELION (>= 3.0-alpha-5)')
-    print(' RELION_IT: authors: Sjors H.W. Scheres, Takanori Nakane & Colin M. Palmer')
+    print(' RELION_IT: authors: Sjors H.W. Scheres, Takanori Nakane, Colin M. Palmer & Donovan Webb')
     print(' RELION_IT: ')
-    print(' RELION_IT: usage: ./relion_it.py [extra_options.py [extra_options2.py ....] ] [--gui] [--continue]')
+    print(' RELION_IT: usage: ./cryolo_relion_it.py [extra_options.py [extra_options2.py ....] ] [--gui] [--continue]')
     print(' RELION_IT: ')
     print(' RELION_IT: this script will check whether processes are still running using files with names starting with RUNNING' )
     print(' RELION_IT:   you can restart this script after stopping previous processes by deleting all RUNNING files')
