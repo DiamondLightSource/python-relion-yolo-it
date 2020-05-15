@@ -49,7 +49,7 @@ def run_job(project_dir, job_dir, args_list):
         if os.path.exists(os.path.join(project_dir, args.in_model)):
             model = os.path.join(project_dir, args.in_model)
         else:
-            print(' RELION_IT: Cannot find fine tuned model')
+            print(' CryoloExternalJob: Cannot find fine tuned model')
 
     # Making a cryolo config file with the correct box size
     with open(conf_file, 'r') as json_file:
@@ -84,7 +84,7 @@ def run_job(project_dir, job_dir, args_list):
         if os.path.split(micrograph)[-1] not in done_mics:
             os.link(os.path.join(project_dir, micrograph), os.path.join(project_dir, job_dir, 'cryolo_input', os.path.split(micrograph)[-1]))
 
-    print(' RELION_IT: Running from model {}'.format(model))
+    print(' CryoloExternalJob: Running from model {}'.format(model))
 
     if use_cluster:
         os.system(f"{qsub_file} cryolo_predict.py -c config.json -i {os.path.join(project_dir, job_dir, 'cryolo_input')} -o {os.path.join(project_dir, job_dir, 'gen_pick')} -w {model} -g 0 -t {thresh}")
@@ -137,7 +137,7 @@ def correct_paths(ctf_star):
         try:
             shutil.move(os.path.join('picked_stars', picked_star), os.path.join(full_dir, picked_star))
         except FileNotFoundError:
-            print(f"cryolo found no particles in {picked_star}")
+            print(f" CryoloExternalJob: cryolo found no particles in {picked_star}")
 
 
 def main():
