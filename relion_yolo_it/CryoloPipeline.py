@@ -88,7 +88,8 @@ def RunJobsCry(num_repeats, runjobs, motioncorr_job, ctffind_job, opts, ipass, q
                           '--box_size', str(int(opts.extract_boxsize / opts.motioncor_binning)),
                           '--threshold', str(opts.cryolo_threshold),
                           '--gmodel', str(opts.cryolo_gmodel),
-                          '--config', str(opts.cryolo_config)]
+                          '--config', str(opts.cryolo_config),
+                          '--gpu', f'"{opts.cryolo_pick_gpus}"']
 
         if os.path.isfile(os.path.join(CRYOLO_FINETUNE_JOB_DIR, CryoloExternalJob.RELION_JOB_SUCCESS_FILENAME)):
             cryolo_command.extend(['--in_model', os.path.join(CRYOLO_FINETUNE_JOB_DIR, 'model.h5')])
