@@ -74,7 +74,7 @@ def RunJobsCry(num_repeats, runjobs, motioncorr_job, ctffind_job, opts, ipass, q
     PREPROCESS_SCHEDULE_PASS2 = 'PREPROCESS_PASS2'
 
     for i in range(0, num_repeats):
-        if not os.path.exists('RUNNING_RELION_IT'):
+        if not os.path.isfile('RUNNING_RELION_IT'):
             print('Exiting cryolo pipeline')
             exit
         preprocess_schedule_name = 'BEFORE_CRYOLO'
@@ -95,7 +95,7 @@ def RunJobsCry(num_repeats, runjobs, motioncorr_job, ctffind_job, opts, ipass, q
         for cry_option in cryolo_options:
             option_string += cry_option
             option_string += ' '
-        if os.path.exists(f'{CRYOLO_FINETUNE_JOB_DIR}/DONE'):
+        if os.path.isfile(f'{CRYOLO_FINETUNE_JOB_DIR}/RELION_JOB_EXIT_SUCCESS'):
             option_string += f"--in_model '{CRYOLO_FINETUNE_JOB_DIR}/model.h5'"
 
         external_path = CryoloExternalJob.__file__
@@ -103,7 +103,7 @@ def RunJobsCry(num_repeats, runjobs, motioncorr_job, ctffind_job, opts, ipass, q
         print(' RELION_IT: RUNNING {}'.format(command))
         os.system(command)
 
-        if not os.path.exists('RUNNING_RELION_IT'):
+        if not os.path.isfile('RUNNING_RELION_IT'):
             print('Exiting cryolo pipeline')
             exit
 
