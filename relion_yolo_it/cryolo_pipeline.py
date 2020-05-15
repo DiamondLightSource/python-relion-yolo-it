@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 '''
-This is the cryolo preprocessing pipeline run from relion_it script. This script first executes the relion_it pipeline up to picking - cryolo then runs through CryoloExternalJob.py and its output is used by relion extraction. All executions of this script after the first run in the background and in parallel to the relion_it script.
+This is the cryolo preprocessing pipeline run from relion_it script. This script first executes the relion_it pipeline up to picking - cryolo then runs through cryolo_external_job.py and its output is used by relion extraction. All executions of this script after the first run in the background and in parallel to the relion_it script.
 
 As with the relion_it script, if RUNNING_RELION_IT is deleted then this script will stop.
 '''
@@ -14,7 +14,7 @@ import subprocess
 import shutil
 
 import cryolo_relion_it
-import CryoloExternalJob
+import cryolo_external_job
 
 
 CRYOLO_PIPELINE_OPTIONS_FILE = 'cryolo_pipeline_options.py'
@@ -71,7 +71,7 @@ def RunJobsCry(num_repeats, runjobs, motioncorr_job, ctffind_job, opts, ipass, q
         cryolo_relion_it.RunJobs(runjobs, 1, 1, preprocess_schedule_name)
         cryolo_relion_it.WaitForJob(motioncorr_job, 15)
         cryolo_relion_it.WaitForJob(ctffind_job, 15)
-        cryolo_command = [CryoloExternalJob.__file__,
+        cryolo_command = [cryolo_external_job.__file__,
                           '--in_mics', os.path.join(ctffind_job, 'micrographs_ctf.star'),
                           '--o', CRYOLO_PICK_JOB_DIR,
                           '--box_size', str(int(opts.extract_boxsize / opts.motioncor_binning)),
@@ -80,7 +80,7 @@ def RunJobsCry(num_repeats, runjobs, motioncorr_job, ctffind_job, opts, ipass, q
                           '--config', str(opts.cryolo_config),
                           '--gpu', f'"{opts.cryolo_pick_gpus}"']
 
-        if os.path.isfile(os.path.join(CRYOLO_FINETUNE_JOB_DIR, CryoloExternalJob.RELION_JOB_SUCCESS_FILENAME)):
+        if os.path.isfile(os.path.join(CRYOLO_FINETUNE_JOB_DIR, cryolo_external_job.RELION_JOB_SUCCESS_FILENAME)):
             cryolo_command.extend(['--in_model', os.path.join(CRYOLO_FINETUNE_JOB_DIR, 'model.h5')])
 
         run_cryolo_job(CRYOLO_PICK_JOB_DIR, cryolo_command, opts, wait_for_completion=True)
@@ -180,22 +180,22 @@ def RunJobsCry(num_repeats, runjobs, motioncorr_job, ctffind_job, opts, ipass, q
 
 def run_cryolo_job(job_dir, command_list, pipeline_opts, wait_for_completion=True):
     """Run a cryolo job (submitting to the queue if requested) and optionally wait for completion"""
-    success_file = os.path.join(job_dir, CryoloExternalJob.RELION_JOB_SUCCESS_FILENAME)
-    failure_file = os.path.join(job_dir, CryoloExternalJob.RELION_JOB_FAILURE_FILENAME)
+    success_file = os.path.join(job_dir, cryolo_external_job.RELION_JOB_SUCCESS_FILENAME)
+    failure_file = os.path.join(job_dir, cryolo_external_job.RELION_JOB_FAILURE_FILENAME)
     if os.path.isfile(failure_file):
-        print(f' CryoloPipeline: Removing previous job failure file {failure_file}')
+        print(f' cryolo_pipeline: Removing previous job failure file {failure_file}')
         os.remove(failure_file)
     if os.path.isfile(success_file):
-        print(f' CryoloPipeline: Removing previous job success file {success_file}')
+        print(f' cryolo_pipeline: Removing previous job success file {success_file}')
         os.remove(success_file)
 
     if pipeline_opts.cryolo_submit_to_queue:
         submit_command = [pipeline_opts.queue_submit_command, pipeline_opts.cryolo_queue_submission_template]
         submit_command.extend(command_list)
-        print(' CryoloPipeline: running cryolo command: {}'.format(' '.join(submit_command)))
+        print(' cryolo_pipeline: running cryolo command: {}'.format(' '.join(submit_command)))
         subprocess.Popen(submit_command)
     else:
-        print(' CryoloPipeline: running cryolo command: {}'.format(' '.join(command_list)))
+        print(' cryolo_pipeline: running cryolo command: {}'.format(' '.join(command_list)))
         subprocess.Popen(command_list)
 
     if wait_for_completion:
@@ -203,7 +203,7 @@ def run_cryolo_job(job_dir, command_list, pipeline_opts, wait_for_completion=Tru
         while not (os.path.isfile(failure_file) or os.path.isfile(success_file)):
             count += 1
             if count % 6 == 0:
-                print(' CryoloPipeline: Still waiting for cryolo job to finish after {count * 10} seconds')
+                print(' cryolo_pipeline: Still waiting for cryolo job to finish after {count * 10} seconds')
             time.sleep(10)
 
 
