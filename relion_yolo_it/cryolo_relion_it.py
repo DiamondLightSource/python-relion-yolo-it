@@ -1893,7 +1893,7 @@ def run_pipeline(opts):
             else:
                 done_fine_tune = False
                 # Call cryolo pipeline once in this process with num_repeats = 1 to set up jobs
-                split_job, manpick_job = cryolo_pipeline.RunJobsCry(1, runjobs, motioncorr_job, ctffind_job, opts, ipass, queue_options, 'None')
+                manpick_job = cryolo_pipeline.RunJobsCry(1, runjobs, motioncorr_job, ctffind_job, opts, ipass, queue_options, 'None')
                 # Now run cryolo pipeline as a background process so that this script can carry on to Class2D etc.
                 # Write the current options to a single file for the cryolo pipeline to use
                 with open(cryolo_pipeline.CRYOLO_PIPELINE_OPTIONS_FILE, 'w') as optfile:
