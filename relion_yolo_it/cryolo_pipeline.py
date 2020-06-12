@@ -82,6 +82,10 @@ def RunJobsCry(
     PREPROCESS_SCHEDULE_PASS1 = "PREPROCESS"
     PREPROCESS_SCHEDULE_PASS2 = "PREPROCESS_PASS2"
 
+    # Ensure return variables are initialised
+    split_job = None
+    manpick_job = None
+
     for i in range(0, num_repeats):
         if not os.path.isfile(RUNNING_FILE):
             print(
@@ -99,9 +103,7 @@ def RunJobsCry(
             do_ib = False
 
         if do_ib:
-            '''
-            # If relion_pipeliner.cpp can accept external job type this is better:
-            ib_script = "/dls/ebic/data/staff-scratch/Donovan/d_rel3.1/d_rel3.1/relion_yolo_it/ICEBREAKER/ib_external_job.py"
+            ib_script = "/dls/ebic/data/staff-scratch/Donovan/d_rel3.1/d_rel3.1/relion_yolo_it/ICEBREAKER/ib_external_job.py" # temporary
 
             externalib_options = [
                 "External executable: == {}".format(ib_script),
@@ -120,6 +122,7 @@ def RunJobsCry(
             )
             runjobs.append(externalib_job)
             '''
+            # If external job type not available do this
             ib_command = [
                 ib_external_job.__file__,
                 "--in_mics",
@@ -132,6 +135,7 @@ def RunJobsCry(
             run_icebreaker_job(
                 IB_JOB_DIR, ib_command, opts, wait_for_completion=True
             )
+            '''
 
         preprocess_schedule_name = "BEFORE_CRYOLO"
         # Running jobs up until picking
@@ -302,7 +306,7 @@ def RunJobsCry(
                 preprocess_schedule_name = PREPROCESS_SCHEDULE_PASS2
             cryolo_relion_it.RunJobs(secondjobs, 1, 1, preprocess_schedule_name)
     if num_repeats == 1:
-        return manpick_job
+        return split_job, manpick_job
 
 
 def run_cryolo_job(job_dir, command_list, pipeline_opts, wait_for_completion=True):
