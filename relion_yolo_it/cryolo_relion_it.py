@@ -327,6 +327,10 @@ class RelionItOptions(object):
     ### CTF estimation parameters
     # Most cases won't need changes here...
 
+    #### ICEBREAKER options
+    ib_submit_to_queue = True
+    ib_queue_submission_template = "/dls_sw/apps/EM/crYOLO/qsub_cryolo_template_rh7"  # temporary
+
     ### Autopick parameters
     # Use reference-free Laplacian-of-Gaussian picking (otherwise use reference-based template matching instead)
     autopick_do_LoG = True
