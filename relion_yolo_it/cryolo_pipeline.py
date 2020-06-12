@@ -107,8 +107,9 @@ def RunJobsCry(
 
             externalib_options = [
                 "External executable: == {}".format(ib_script),
-                "Input micrographs: == {}micrographs_ctf.star".format(ctffind_job),
-                "mode: == {}".format(ib_mode)
+                "in_mic == {}micrographs_ctf.star".format(ctffind_job),
+                "param1_label == mode",
+                "param1_value == {}".format(ib_mode),
             ]
 
             externalib_job_name = "ICEBREAKER_{}".format(ib_mode)
