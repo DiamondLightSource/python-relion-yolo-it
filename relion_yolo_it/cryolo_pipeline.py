@@ -87,31 +87,33 @@ def RunJobsCry(
             )
             exit(0)
 
-            # ICEBREAKER RUN AFTER CTF
-            do_ib = True
-            ib_mode = "flatten"
-            ib_script = "/dls/ebic/data/staff-scratch/Donovan/d_rel3.1/d_rel3.1/relion_yolo_it/ICEBREAKER/ib_external_job.py"
+        # ICEBREAKER RUN AFTER CTF
+        do_ib = True
+        ib_mode = "flatten"
+        ib_script = "/dls/ebic/data/staff-scratch/Donovan/d_rel3.1/d_rel3.1/relion_yolo_it/ICEBREAKER/ib_external_job.py"
 
-            ib_expected_modes = ["flatten", "group"]
-            if ib_mode not in ib_expected_modes:
-                print("ICEBREAKER mode not recognized")
-                do_ib = False
+        ib_expected_modes = ["flatten", "group"]
+        if ib_mode not in ib_expected_modes:
+            print("ICEBREAKER mode not recognized")
+            do_ib = False
 
-            if do_ib:
-                externalib_options = [
-                    "External executable: == {}".format(ib_script),
-                    "Input micrographs: == {}micrographs_ctf.star".format(ctffind_job),
-                    "mode: == {}".format(ib_mode)
-                ]
-                externalib_job_name = "ICEBREAKER_{}".format(ib_mode)
-                externalib_alias = "ICEBREAKER_{}".format(ib_mode)
-                externalib_job, already_had_it = cryolo_relion_it.addJob(
-                    "External",
-                    externalib_job_name,
-                    SETUP_CHECK_FILE,
-                    externalib_options,
-                    alias=externalib_alias,
-                )
+        if do_ib:
+            externalib_options = [
+                "External executable: == {}".format(ib_script),
+                "Input micrographs: == {}micrographs_ctf.star".format(ctffind_job),
+                "mode: == {}".format(ib_mode)
+            ]
+            externalib_job_name = "ICEBREAKER_{}".format(ib_mode)
+            externalib_alias = "ICEBREAKER_{}".format(ib_mode)
+            externalib_job, already_had_it = cryolo_relion_it.addJob(
+                "External",
+                externalib_job_name,
+                SETUP_CHECK_FILE,
+                externalib_options,
+                alias=externalib_alias,
+            )
+            runjobs.append(externalib_job)
+
         preprocess_schedule_name = "BEFORE_CRYOLO"
         # Running jobs up until picking
         cryolo_relion_it.RunJobs(runjobs, 1, 1, preprocess_schedule_name)
