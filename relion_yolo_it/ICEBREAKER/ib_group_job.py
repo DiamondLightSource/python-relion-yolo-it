@@ -19,6 +19,9 @@ sys.path.insert(0, "/dls/ebic/data/staff-scratch/test_ice/relion_wrappers/ICEBRE
 sys.path.insert(0, "/home/lexi/Documents/Diamond/ICEBREAKER/IBscripts")
 import ice_groups as ib_igroups
 
+RELION_JOB_FAILURE_FILENAME = "RELION_JOB_EXIT_FAILURE"
+RELION_JOB_SUCCESS_FILENAME = "RELION_JOB_EXIT_SUCCESS"
+
 
 def run_job(project_dir, job_dir, args_list):
     parser = argparse.ArgumentParser()

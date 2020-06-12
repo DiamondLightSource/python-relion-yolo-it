@@ -22,6 +22,9 @@ import icebreaker_icegroups as ib_group
 import correct_path
 import star_appender
 
+RELION_JOB_FAILURE_FILENAME = "RELION_JOB_EXIT_FAILURE"
+RELION_JOB_SUCCESS_FILENAME = "RELION_JOB_EXIT_SUCCESS"
+
 
 def run_job(project_dir, job_dir, args_list, mode):
     parser = argparse.ArgumentParser()

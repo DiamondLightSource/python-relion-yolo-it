@@ -7,6 +7,10 @@ Default options file for eBIC. Uses the DLS Hamilton GPU cluster.
 Defaults for all options not defined here are as in the original relion_it.py script.
 """
 
+#### ICEBREAKER options
+ib_submit_to_queue = True
+ib_queue_submission_template = "/dls_sw/apps/EM/crYOLO/qsub_cryolo_template_rh7"  # temporary
+
 #### crYOLO options
 
 # Run Cryolo picking or autopicking

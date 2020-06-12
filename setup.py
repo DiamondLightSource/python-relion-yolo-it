@@ -31,6 +31,8 @@ setup(
         "relion_yolo_it/cryolo_pipeline.py",
         "relion_yolo_it/cryolo_external_job.py",
         "relion_yolo_it/cryolo_fine_tune_job.py",
+        "relion_yolo_it/ICEBREAKER/ib_external_job.py",
+        "relion_yolo_it/ICEBREAKER/ib_group_job.py",
     ],
     python_requires=">=3.6",
     setup_requires=setup_requirements,

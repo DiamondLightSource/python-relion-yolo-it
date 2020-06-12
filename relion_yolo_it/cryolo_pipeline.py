@@ -14,11 +14,13 @@ import shutil
 
 import cryolo_relion_it
 import cryolo_external_job
+import ib_external_job  # TODO add to path
 
 
 CRYOLO_PIPELINE_OPTIONS_FILE = "cryolo_pipeline_options.py"
 CRYOLO_PICK_JOB_DIR = "External/crYOLO_AutoPick"
 CRYOLO_FINETUNE_JOB_DIR = "External/crYOLO_FineTune"
+IB_JOB_DIR = "External/IB_Flatten"  # Temporary
 
 
 def main():
@@ -90,7 +92,6 @@ def RunJobsCry(
         # ICEBREAKER RUN AFTER CTF
         do_ib = True
         ib_mode = "flatten"
-        ib_script = "/dls/ebic/data/staff-scratch/Donovan/d_rel3.1/d_rel3.1/relion_yolo_it/ICEBREAKER/ib_external_job.py"
 
         ib_expected_modes = ["flatten", "group"]
         if ib_mode not in ib_expected_modes:
@@ -98,11 +99,16 @@ def RunJobsCry(
             do_ib = False
 
         if do_ib:
+            '''
+            # If relion_pipeliner.cpp can accept external job type this is better:
+            ib_script = "/dls/ebic/data/staff-scratch/Donovan/d_rel3.1/d_rel3.1/relion_yolo_it/ICEBREAKER/ib_external_job.py"
+
             externalib_options = [
                 "External executable: == {}".format(ib_script),
                 "Input micrographs: == {}micrographs_ctf.star".format(ctffind_job),
                 "mode: == {}".format(ib_mode)
             ]
+
             externalib_job_name = "ICEBREAKER_{}".format(ib_mode)
             externalib_alias = "ICEBREAKER_{}".format(ib_mode)
             externalib_job, already_had_it = cryolo_relion_it.addJob(
@@ -113,6 +119,19 @@ def RunJobsCry(
                 alias=externalib_alias,
             )
             runjobs.append(externalib_job)
+            '''
+            ib_command = [
+                ib_external_job.__file__,
+                "--in_mics",
+                os.path.join(ctffind_job, "micrographs_ctf.star"),
+                "--o",
+                IB_JOB_DIR,
+                "--mode",
+                ib_mode,
+            ]
+            run_icebreaker_job(
+                IB_JOB_DIR, ib_command, opts, wait_for_completion=True
+            )
 
         preprocess_schedule_name = "BEFORE_CRYOLO"
         # Running jobs up until picking
@@ -335,7 +354,61 @@ def run_cryolo_job(job_dir, command_list, pipeline_opts, wait_for_completion=Tru
             count += 1
             if count % 6 == 0:
                 print(
-                    " cryolo_pipeline: Still waiting for cryolo job to finish after {count * 10} seconds"
+                    f" cryolo_pipeline: Still waiting for cryolo job to finish after {count * 10} seconds"
+                )
+            time.sleep(10)
+
+
+def run_icebreaker_job(job_dir, command_list, pipeline_opts, wait_for_completion=True):
+    """Run an icebreaker job (submitting to the queue if requested) and optionally wait for completion"""
+    success_file = os.path.join(
+        job_dir, ib_external_job.RELION_JOB_SUCCESS_FILENAME
+    )
+    failure_file = os.path.join(
+        job_dir, ib_external_job.RELION_JOB_FAILURE_FILENAME
+    )
+    if os.path.isfile(failure_file):
+        print(f" cryolo_pipeline: Removing previous job failure file {failure_file}")
+        os.remove(failure_file)
+    if os.path.isfile(success_file):
+        print(f" cryolo_pipeline: Removing previous job success file {success_file}")
+        os.remove(success_file)
+
+    if pipeline_opts.ib_submit_to_queue:
+        # TODO: remove -o and -e arguments after switch to Relion 3.1. This syntax is specific to
+        # qsub but necessary for now to ensure stdout and stderr files go in the job directory
+        # rather than the project directory. In Relion 3.1 the normal Relion qsub template can be
+        # used which will put the files in the right place automatically.
+        submit_command = [
+            pipeline_opts.queue_submit_command,
+            "-o",
+            os.path.join(job_dir, "icebreaker_job.out"),  # Temporary!
+            "-e",
+            os.path.join(job_dir, "icebreaker_job.err"),  # Temporary!
+            pipeline_opts.ib_queue_submission_template,
+        ]
+        submit_command.extend(command_list)
+        print(
+            " cryolo_pipeline: running icebreaker command: {}".format(
+                " ".join(submit_command)
+            )
+        )
+        subprocess.Popen(submit_command)
+    else:
+        print(
+            " cryolo_pipeline: running icebreaker command: {}".format(
+                " ".join(command_list)
+            )
+        )
+        subprocess.Popen(command_list)
+
+    if wait_for_completion:
+        count = 0
+        while not (os.path.isfile(failure_file) or os.path.isfile(success_file)):
+            count += 1
+            if count % 6 == 0:
+                print(
+                    f" cryolo_pipeline: Still waiting for icebreaker job to finish after {count * 10} seconds"
                 )
             time.sleep(10)
 
