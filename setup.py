@@ -33,6 +33,8 @@ setup(
         "relion_yolo_it/cryolo_fine_tune_job.py",
         "relion_yolo_it/ICEBREAKER/ib_external_job.py",
         "relion_yolo_it/ICEBREAKER/ib_group_job.py",
+        "relion_yolo_it/ICEBREAKER/ib_correct_path.py",
+        "relion_yolo_it/ICEBREAKER/ib_star_appender.py",
     ],
     python_requires=">=3.6",
     setup_requires=setup_requirements,

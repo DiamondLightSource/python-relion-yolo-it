@@ -19,8 +19,8 @@ sys.path.insert(0, "/dls/ebic/data/staff-scratch/test_ice/relion_wrappers/ICEBRE
 sys.path.insert(0, "/home/lexi/Documents/Diamond/ICEBREAKER/IBscripts")
 import icebreaker_equalize as ib_equal
 import icebreaker_icegroups as ib_group
-import correct_path
-import star_appender
+import ib_correct_path
+import ib_star_appender
 
 RELION_JOB_FAILURE_FILENAME = "RELION_JOB_EXIT_FAILURE"
 RELION_JOB_SUCCESS_FILENAME = "RELION_JOB_EXIT_SUCCESS"
@@ -66,7 +66,7 @@ def run_job(project_dir, job_dir, args_list, mode):
             if micrograph.endswith('mrc'):
                 f.write(micrograph + '\n')
 
-    correct_path.correct(ctf_star, os.path.join('IB_input', f'{mode}ed'), f'{mode}ed')
+    ib_correct_path.correct(ctf_star, os.path.join('IB_input', f'{mode}ed'), f'{mode}ed')
 
     # Writing a star file for Relion
     part_doc = open('ib_equalize.star', 'w')
@@ -75,7 +75,7 @@ def run_job(project_dir, job_dir, args_list, mode):
     part_doc.close()
 
     # make {mode}ed_micrgraph.star
-    star_appender.mic_star(ctf_star, job_dir, mode)
+    ib_star_appender.mic_star(ctf_star, job_dir, mode)
 
     # Required star file
     out_doc = gemmi.cif.Document()
