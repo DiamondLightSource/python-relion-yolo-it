@@ -14,6 +14,8 @@ import shutil
 
 import cryolo_relion_it
 import cryolo_external_job
+ib_path = os.path.join(os.path.split(__file__)[0], "ICEBREAKER")
+sys.path.insert(0, ib_path)
 import ib_external_job  # TODO add to path
 
 
