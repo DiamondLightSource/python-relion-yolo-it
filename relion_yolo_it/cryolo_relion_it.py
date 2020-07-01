@@ -271,7 +271,7 @@ import grp
 
 import gemmi
 
-from relion_yolo_it import cryolo_pipeline
+from relion_yolo_it import cryolo_external_job
 
 try:
     import tkinter as tk
@@ -2016,9 +2016,47 @@ def run_pipeline(opts):
 
         # There is an option to stop on-the-fly processing after CTF estimation
         if not opts.stop_after_ctf_estimation:
-            if (
-                not opts.autopick_do_cryolo
-            ):  # If using crYOLO need to run different pipeline. See below...
+
+            # Set up particle picking as External crYOLO job or AutoPick job
+            if opts.autopick_do_cryolo:
+                cryolo_options = [
+                    f"External executable: == python3 {cryolo_external_job.__file__}",
+                    f"Input micrographs: == {ctffind_job}micrographs_ctf.star",
+                    "Param1 - label: == box_size",
+                    f"Param1 - value: == {int(opts.extract_boxsize / opts.motioncor_binning)}",
+                    "Param2 - label: == threshold",
+                    f"Param2 - value: == {opts.cryolo_threshold}",
+                    "Param3 - label: == gmodel",
+                    f"Param3 - value: == {opts.cryolo_gmodel}",
+                    "Param4 - label: == config",
+                    f"Param4 - value: == {opts.cryolo_config}",
+                    "Param5 - label: == gpu",
+                    f'Param5 - value: == "{opts.cryolo_pick_gpus}"',
+                ]
+
+                # TODO: fix fine tune for running as External job
+                # if os.path.isfile(
+                #         os.path.join(
+                #             CRYOLO_FINETUNE_JOB_DIR,
+                #             cryolo_external_job.RELION_JOB_SUCCESS_FILENAME
+                #         )
+                # ):
+                #     cryolo_options.extend([
+                #         "Param6 - label: == in_model",
+                #         f'Param6 - value: == {os.path.join(CRYOLO_FINETUNE_JOB_DIR, "model.h5")}',
+                #     ])
+
+                if opts.cryolo_submit_to_queue:
+                    cryolo_options.extend(queue_options)
+
+                autopick_job, already_had_it = addJob(
+                    "External",
+                    "cryolo_pick_job",
+                    SETUP_CHECK_FILE,
+                    cryolo_options,
+                    alias="crYOLO_AutoPick",
+                )
+            else:
                 autopick_options = [
                     "Input micrographs for autopick: == {}micrographs_ctf.star".format(
                         ctffind_job
@@ -2035,7 +2073,7 @@ def run_pipeline(opts):
                     "Adjust default threshold (stddev): == {}".format(
                         opts.autopick_LoG_adjust_threshold
                     ),
-                    'Upper threshold (stddev): == {}'.format(
+                    "Upper threshold (stddev): == {}".format(
                         opts.autopick_LoG_upper_threshold
                     ),
                     "2D references: == {}".format(opts.autopick_2dreferences),
@@ -2108,163 +2146,120 @@ def run_pipeline(opts):
                     autopick_options,
                     alias=autopick_alias,
                 )
-                runjobs.append(autopick_job)
 
-                #### Set up the Extract job
-                bin_corrected_box_exact = int(
-                    opts.extract_boxsize / opts.motioncor_binning
-                )
-                bin_corrected_box_even = (
-                    bin_corrected_box_exact + bin_corrected_box_exact % 2
-                )
-                extract_options = [
-                    "Input coordinates:  == {}coords_suffix_autopick.star".format(
-                        autopick_job
+            runjobs.append(autopick_job)
+
+            #### Set up the Extract job
+            bin_corrected_box_exact = int(
+                opts.extract_boxsize / opts.motioncor_binning
+            )
+            bin_corrected_box_even = (
+                bin_corrected_box_exact + bin_corrected_box_exact % 2
+            )
+            extract_options = [
+                "Input coordinates:  == {}coords_suffix_autopick.star".format(
+                    autopick_job
+                ),
+                "micrograph STAR file:  == {}micrographs_ctf.star".format(ctffind_job),
+                "Diameter background circle (pix):  == {}".format(
+                    opts.extract_bg_diameter
+                ),
+                "Particle box size (pix): == {}".format(bin_corrected_box_even),
+                "Number of MPI procs: == {}".format(opts.extract_mpi),
+            ]
+
+            if ipass == 0:
+                if opts.extract_downscale:
+                    extract_options.append("Rescale particles? == Yes")
+                    extract_options.append(
+                        "Re-scaled size (pixels):  == {}".format(
+                            opts.extract_small_boxsize
+                        )
+                    )
+            else:
+                if opts.extract2_downscale:
+                    extract_options.append("Rescale particles? == Yes")
+                    extract_options.append(
+                        "Re-scaled size (pixels):  == {}".format(
+                            opts.extract2_small_boxsize
+                        )
+                    )
+
+            if opts.extract_submit_to_queue:
+                extract_options.extend(queue_options)
+
+            if ipass == 0:
+                extract_job_name = "extract_job"
+                extract_alias = "pass 1"
+            else:
+                extract_job_name = "extract2_job"
+                extract_alias = "pass 2"
+
+            extract_job, already_had_it = addJob(
+                "Extract",
+                extract_job_name,
+                SETUP_CHECK_FILE,
+                extract_options,
+                alias=extract_alias,
+            )
+            runjobs.append(extract_job)
+
+            if (ipass == 0 and (opts.do_class2d or opts.do_class3d)) or (
+                ipass == 1 and (opts.do_class2d_pass2 or opts.do_class3d_pass2)
+            ):
+                #### Set up the Select job to split the particle STAR file into batches
+                split_options = [
+                    "OR select from particles.star: == {}particles.star".format(
+                        extract_job
                     ),
-                    "micrograph STAR file:  == {}micrographs_ctf.star".format(
-                        ctffind_job
-                    ),
-                    "Diameter background circle (pix):  == {}".format(
-                        opts.extract_bg_diameter
-                    ),
-                    "Particle box size (pix): == {}".format(bin_corrected_box_even),
-                    "Number of MPI procs: == {}".format(opts.extract_mpi),
+                    "OR: split into subsets? == Yes",
+                    "OR: number of subsets:  == -1",
                 ]
 
                 if ipass == 0:
-                    if opts.extract_downscale:
-                        extract_options.append("Rescale particles? == Yes")
-                        extract_options.append(
-                            "Re-scaled size (pixels):  == {}".format(
-                                opts.extract_small_boxsize
-                            )
-                        )
+                    split_job_name = "split_job"
+                    split_options.append("Subset size:  == {}".format(opts.batch_size))
+                    split_alias = "into {}".format(opts.batch_size)
                 else:
-                    if opts.extract2_downscale:
-                        extract_options.append("Rescale particles? == Yes")
-                        extract_options.append(
-                            "Re-scaled size (pixels):  == {}".format(
-                                opts.extract2_small_boxsize
-                            )
-                        )
-
-                if opts.extract_submit_to_queue:
-                    extract_options.extend(queue_options)
-
-                if ipass == 0:
-                    extract_job_name = "extract_job"
-                    extract_alias = "pass 1"
-                else:
-                    extract_job_name = "extract2_job"
-                    extract_alias = "pass 2"
-
-                extract_job, already_had_it = addJob(
-                    "Extract",
-                    extract_job_name,
-                    SETUP_CHECK_FILE,
-                    extract_options,
-                    alias=extract_alias,
-                )
-                runjobs.append(extract_job)
-
-                if (ipass == 0 and (opts.do_class2d or opts.do_class3d)) or (
-                    ipass == 1 and (opts.do_class2d_pass2 or opts.do_class3d_pass2)
-                ):
-                    #### Set up the Select job to split the particle STAR file into batches
-                    split_options = [
-                        "OR select from particles.star: == {}particles.star".format(
-                            extract_job
-                        ),
-                        "OR: split into subsets? == Yes",
-                        "OR: number of subsets:  == -1",
-                    ]
-
-                    if ipass == 0:
-                        split_job_name = "split_job"
-                        split_options.append(
-                            "Subset size:  == {}".format(opts.batch_size)
-                        )
-                        split_alias = "into {}".format(opts.batch_size)
-                    else:
-                        split_job_name = "split2_job"
-                        split_options.append(
-                            "Subset size:  == {}".format(opts.batch_size_pass2)
-                        )
-                        split_alias = "into {}".format(opts.batch_size_pass2)
-
-                    split_job, already_had_it = addJob(
-                        "Select",
-                        split_job_name,
-                        SETUP_CHECK_FILE,
-                        split_options,
-                        alias=split_alias,
+                    split_job_name = "split2_job"
+                    split_options.append(
+                        "Subset size:  == {}".format(opts.batch_size_pass2)
                     )
+                    split_alias = "into {}".format(opts.batch_size_pass2)
 
-                    # Now start running stuff
-                    runjobs.append(split_job)
-
-            #### CRYOLO INSERT BEGIN ####
-            else:
-                done_fine_tune = False
-                # Call cryolo pipeline once in this process with num_repeats = 1 to set up jobs
-                split_job, manpick_job = cryolo_pipeline.RunJobsCry(
-                    1,
-                    runjobs,
-                    motioncorr_job,
-                    ctffind_job,
-                    opts,
-                    ipass,
-                    queue_options,
-                    "None",
-                )
-                # Now run cryolo pipeline as a background process so that this script can carry on to Class2D etc.
-                # Write the current options to a single file for the cryolo pipeline to use
-                with open(cryolo_pipeline.CRYOLO_PIPELINE_OPTIONS_FILE, "w") as optfile:
-                    opts.print_options(optfile)
-                cryolo_pipeline_script = os.path.abspath(
-                    cryolo_pipeline.__file__
-                )  # Need to find absolute paths to cryolo_pipeline file to run with subprocess
-                subprocess.Popen(
-                    [
-                        cryolo_pipeline_script,
-                        "--runjobs",
-                        "{}".format(runjobs),
-                        "--motioncorr_job",
-                        motioncorr_job,
-                        "--ctffind_job",
-                        ctffind_job,
-                        "--ipass",
-                        "{}".format(ipass),
-                        "--manpick_job",
-                        manpick_job,
-                    ]
+                split_job, already_had_it = addJob(
+                    "Select",
+                    split_job_name,
+                    SETUP_CHECK_FILE,
+                    split_options,
+                    alias=split_alias,
                 )
 
-            #### CRYOLO INSERT END ####
+                # Now start running stuff
+                runjobs.append(split_job)
 
-        if (not opts.autopick_do_cryolo) or opts.stop_after_ctf_estimation:
-            # Now execute the entire preprocessing pipeliner
-            if ipass == 0:
-                preprocess_schedule_name = PREPROCESS_SCHEDULE_PASS1
-            else:
-                preprocess_schedule_name = PREPROCESS_SCHEDULE_PASS2
-            RunJobs(
-                runjobs,
-                opts.preprocess_repeat_times,
-                opts.preprocess_repeat_wait,
-                preprocess_schedule_name,
-            )
-            print(
-                " RELION_IT: submitted",
-                preprocess_schedule_name,
-                "pipeliner with",
-                opts.preprocess_repeat_times,
-                "repeats of the preprocessing jobs",
-            )
-            print(
-                " RELION_IT: this pipeliner will run in the background of your shell. You can stop it by deleting the file RUNNING_PIPELINER_"
-                + preprocess_schedule_name
-            )
+        # Now execute the entire preprocessing pipeliner
+        if ipass == 0:
+            preprocess_schedule_name = PREPROCESS_SCHEDULE_PASS1
+        else:
+            preprocess_schedule_name = PREPROCESS_SCHEDULE_PASS2
+        RunJobs(
+            runjobs,
+            opts.preprocess_repeat_times,
+            opts.preprocess_repeat_wait,
+            preprocess_schedule_name,
+        )
+        print(
+            " RELION_IT: submitted",
+            preprocess_schedule_name,
+            "pipeliner with",
+            opts.preprocess_repeat_times,
+            "repeats of the preprocessing jobs",
+        )
+        print(
+            " RELION_IT: this pipeliner will run in the background of your shell. You can stop it by deleting the file RUNNING_PIPELINER_"
+            + preprocess_schedule_name
+        )
 
         ########## From now on, process extracted particles in batches for 2D or 3D classification, only perform SGD inimodel for first batch and if no 3D reference is available
 
@@ -2516,80 +2511,81 @@ def run_pipeline(opts):
                                 WaitForJob(class2d_job, 30)
 
                                 ### INSERT FOR CRYOLO FINE ###
-                                """
-                                Fine tuning for cryolo is an option. If this is True then a `good` subselection of 2D classes can be made and then the general cryolo model can be finetuned with these particles.
-                                """
-
-                                if (
-                                    opts.cryolo_finetune
-                                    and opts.autopick_do_cryolo
-                                    and not done_fine_tune
-                                ):
-                                    done_fine_tune = True
-                                    subset_fine_options = [
-                                        "Select classes from model.star: == {}run_it{:03d}_model.star".format(
-                                            class2d_job, opts.class2d_nr_iter
-                                        )
-                                    ]
-                                    subset_fine_name = "subset_fine_job"
-                                    alias = "fine_tune"
-                                    subset_fine_job, already_had_it = addJob(
-                                        "Select",
-                                        subset_fine_name,
-                                        SETUP_CHECK_FILE,
-                                        subset_fine_options,
-                                        alias=alias,
-                                    )
-                                    RunJobs([subset_fine_job], 1, 1, "SUBSET")
-                                    ### Fine Tuning for Cryolo
-                                    fine_particles_star_file = "Select/{}/particles.star".format(
-                                        alias
-                                    )
-                                    in_doc_fine = gemmi.cif.read_file(
-                                        particles_star_file
-                                    )
-                                    data_as_dict = json.loads(in_doc_fine.as_json())[
-                                        "#"
-                                    ]
-                                    if (
-                                        len(
-                                            np.unique(
-                                                data_as_dict["_rlnmicrographname"]
-                                            )
-                                        )
-                                        >= 8
-                                    ):
-                                        # Enough to fine tune
-                                        print("Enough micrographs to retrain!")
-                                        relion_pipeline_home = os.path.abspath(
-                                            os.path.dirname(cryolo_pipeline.__file__)
-                                        )
-                                        external_path = os.path.join(
-                                            relion_pipeline_home,
-                                            "cryolo_fine_tune_job.py",
-                                        )
-                                        cryolo_fine_cmd = [
-                                            external_path,
-                                            "--in_parts",
-                                            fine_particles_star_file,
-                                            "--o",
-                                            cryolo_pipeline.CRYOLO_FINETUNE_JOB_DIR,
-                                            "--box_size",
-                                            str(opts.extract_boxsize),
-                                            "--gmodel",
-                                            str(opts.cryolo_gmodel),
-                                            "--config",
-                                            str(opts.cryolo_config),
-                                        ]
-
-                                        # Run in background so relion_it can carry on processing new data. Training can take a while...
-                                        # TODO: fix this so it allows this script to continue, but waits for the Select job to be done before starting cryolo to avoid clogging a cluster node while waiting for user input
-                                        cryolo_pipeline.run_cryolo_job(
-                                            cryolo_pipeline.CRYOLO_FINETUNE_JOB_DIR,
-                                            cryolo_fine_cmd,
-                                            opts,
-                                            wait_for_completion=False,
-                                        )
+                                # TODO: fix this to run as a proper External job
+                                # """
+                                # Fine tuning for cryolo is an option. If this is True then a `good` subselection of 2D classes can be made and then the general cryolo model can be finetuned with these particles.
+                                # """
+                                #
+                                # if (
+                                #     opts.cryolo_finetune
+                                #     and opts.autopick_do_cryolo
+                                #     and not done_fine_tune
+                                # ):
+                                #     done_fine_tune = True
+                                #     subset_fine_options = [
+                                #         "Select classes from model.star: == {}run_it{:03d}_model.star".format(
+                                #             class2d_job, opts.class2d_nr_iter
+                                #         )
+                                #     ]
+                                #     subset_fine_name = "subset_fine_job"
+                                #     alias = "fine_tune"
+                                #     subset_fine_job, already_had_it = addJob(
+                                #         "Select",
+                                #         subset_fine_name,
+                                #         SETUP_CHECK_FILE,
+                                #         subset_fine_options,
+                                #         alias=alias,
+                                #     )
+                                #     RunJobs([subset_fine_job], 1, 1, "SUBSET")
+                                #     ### Fine Tuning for Cryolo
+                                #     fine_particles_star_file = "Select/{}/particles.star".format(
+                                #         alias
+                                #     )
+                                #     in_doc_fine = gemmi.cif.read_file(
+                                #         particles_star_file
+                                #     )
+                                #     data_as_dict = json.loads(in_doc_fine.as_json())[
+                                #         "#"
+                                #     ]
+                                #     if (
+                                #         len(
+                                #             np.unique(
+                                #                 data_as_dict["_rlnmicrographname"]
+                                #             )
+                                #         )
+                                #         >= 8
+                                #     ):
+                                #         # Enough to fine tune
+                                #         print("Enough micrographs to retrain!")
+                                #         relion_pipeline_home = os.path.abspath(
+                                #             os.path.dirname(cryolo_pipeline.__file__)
+                                #         )
+                                #         external_path = os.path.join(
+                                #             relion_pipeline_home,
+                                #             "cryolo_fine_tune_job.py",
+                                #         )
+                                #         cryolo_fine_cmd = [
+                                #             external_path,
+                                #             "--in_parts",
+                                #             fine_particles_star_file,
+                                #             "--o",
+                                #             cryolo_pipeline.CRYOLO_FINETUNE_JOB_DIR,
+                                #             "--box_size",
+                                #             str(opts.extract_boxsize),
+                                #             "--gmodel",
+                                #             str(opts.cryolo_gmodel),
+                                #             "--config",
+                                #             str(opts.cryolo_config),
+                                #         ]
+                                #
+                                #         # Run in background so relion_it can carry on processing new data. Training can take a while...
+                                #         # TODO: fix this so it allows this script to continue, but waits for the Select job to be done before starting cryolo to avoid clogging a cluster node while waiting for user input
+                                #         cryolo_pipeline.run_cryolo_job(
+                                #             cryolo_pipeline.CRYOLO_FINETUNE_JOB_DIR,
+                                #             cryolo_fine_cmd,
+                                #             opts,
+                                #             wait_for_completion=False,
+                                #         )
 
                                 ### END CRYOLO FINE ###
 
@@ -2648,7 +2644,7 @@ def run_pipeline(opts):
                                 "Final mini-batch size: == {}".format(
                                     opts.inimodel_batchsize_final
                                 ),
-                                'Increased noise variance half-life: == {}'.format(
+                                "Increased noise variance half-life: == {}".format(
                                     opts.inimodel_sigmafudge_halflife
                                 ),
                                 "Number of pooled particles: == 1",
@@ -2731,7 +2727,7 @@ def run_pipeline(opts):
                                     + " does not contain expected output maps."
                                 )
                                 print(
-                                    " RELION_IT: This job should have finished, but you may continue it from the GUI. "
+                                    " RELION_IT: This job should have finished, but you may continue it from the GUI."
                                 )
                                 raise Exception(
                                     "ERROR!! quitting the pipeline."
@@ -2969,7 +2965,7 @@ def main():
     used to update the default options.
     """
     # Start by parsing arguments
-    # (If --help is given, the program will print a usage message and exit
+    # (If --help is given, the program will print a usage message and exit)
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "extra_options",
