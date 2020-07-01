@@ -335,6 +335,7 @@ class RelionItOptions(object):
     autopick_LoG_diam_max = 180
     # Use positive values (0-1) to pick fewer particles; use negative values (-1-0) to pick more particles
     autopick_LoG_adjust_threshold = 0.0
+    autopick_LoG_upper_threshold = 999.0
     #
     # OR:
     #
@@ -572,6 +573,7 @@ class RelionItOptions(object):
     # Wait with the first 2D classification batch until at least this many particles are extracted
     minimum_batch_size = 1000
     # Number of iterations to perform in 2D classification
+    # Must be at least 20 for fast subsets
     class2d_nr_iter = 20
     # Rotational search step (in degrees)
     class2d_angle_step = 6
@@ -586,6 +588,7 @@ class RelionItOptions(object):
 
     ### 3D classification parameters
     # Number of iterations to perform in 3D classification
+    # Must be at least 20 for fast subsets
     class3d_nr_iter = 20
     # Reference mask
     class3d_reference_mask = ""
@@ -1898,17 +1901,19 @@ def run_pipeline(opts):
     for ipass in range(first_pass, nr_passes):
 
         #### Set up the Import job
-        import_options = ['Raw input files: == {}'.format(opts.import_images),
-                          'Import raw movies/micrographs? == Yes',
-                          'Pixel size (Angstrom): == {}'.format(opts.angpix),
-                          'Voltage (kV): == {}'.format(opts.voltage),
-                          'Spherical aberration (mm): == {}'.format(opts.Cs),
-                          'Amplitude contrast: == {}'.format(opts.ampl_contrast)]
+        import_options = [
+            "Raw input files: == {}".format(opts.import_images),
+            "Import raw movies/micrographs? == Yes",
+            "Pixel size (Angstrom): == {}".format(opts.angpix),
+            "Voltage (kV): == {}".format(opts.voltage),
+            "Spherical aberration (mm): == {}".format(opts.Cs),
+            "Amplitude contrast: == {}".format(opts.ampl_contrast),
+        ]
 
         if opts.images_are_movies:
-            import_options.append('Are these multi-frame movies? == Yes')
+            import_options.append("Are these multi-frame movies? == Yes")
         else:
-            import_options.append('Are these multi-frame movies? == No')
+            import_options.append("Are these multi-frame movies? == No")
 
         import_job, already_had_it = addJob(
             "Import", "import_job", SETUP_CHECK_FILE, import_options
@@ -1939,9 +1944,9 @@ def run_pipeline(opts):
             if opts.motioncor_do_own:
                 motioncorr_options.append("Use RELION's own implementation? == Yes")
                 if opts.use_ctffind_instead:
-                    motioncorr_options.append('Save sum of power spectra? == Yes')
+                    motioncorr_options.append("Save sum of power spectra? == Yes")
                 else:
-                    motioncorr_options.append('Save sum of power spectra? == No')
+                    motioncorr_options.append("Save sum of power spectra? == No")
             else:
                 motioncorr_options.append("Use RELION's own implementation? == No")
 
@@ -1983,11 +1988,11 @@ def run_pipeline(opts):
         if opts.use_ctffind_instead:
             ctffind_options.append("Use CTFFIND-4.1? == Yes")
             ctffind_options.append("Use Gctf instead? == No")
-            ctffind_options.append('Use power spectra from MotionCorr job? == Yes')
+            ctffind_options.append("Use power spectra from MotionCorr job? == Yes")
         else:
             ctffind_options.append("Use CTFFIND-4.1? == No")
             ctffind_options.append("Use Gctf instead? == Yes")
-            ctffind_options.append('Use power spectra from MotionCorr job? == No')
+            ctffind_options.append("Use power spectra from MotionCorr job? == No")
             if opts.ctffind_do_ignore_search_params:
                 ctffind_options.append("Ignore 'Searches' parameters? == Yes")
             else:
