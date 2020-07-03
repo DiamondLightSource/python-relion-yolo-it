@@ -1608,9 +1608,11 @@ def load_star(filename):
 
 # Don't get stuck in infinite while True loops....
 def CheckForExit():
+    """Check if the script should exit. If so, return True."""
     if not os.path.isfile(RUNNING_FILE):
         print(" RELION_IT:", RUNNING_FILE, "file no longer exists, exiting now ...")
-        sys.exit(0)
+        return True
+    return False
 
 
 # Allow direct progressing to the second pass
@@ -1724,7 +1726,8 @@ def WaitForJob(wait_for_this_job, seconds_wait):
             print(" RELION_IT: job in", wait_for_this_job, "has finished now")
             return
         else:
-            CheckForExit()
+            if CheckForExit():
+                return
             time.sleep(seconds_wait)
 
 
@@ -2410,6 +2413,8 @@ def run_pipeline(opts):
 
                                 # Wait here until this Discard job is finished. Check every thirty seconds
                                 WaitForJob(discard_job, 30)
+                                if CheckForExit():
+                                    return
 
                             particles_star_file = discard_job + "particles.star"
 
@@ -2516,6 +2521,8 @@ def run_pipeline(opts):
 
                                 # Wait here until this Class2D job is finished. Check every thirty seconds
                                 WaitForJob(class2d_job, 30)
+                                if CheckForExit():
+                                    return
 
                                 ### INSERT FOR CRYOLO FINE ###
                                 # TODO: fix this to run as a proper External job
@@ -2721,6 +2728,8 @@ def run_pipeline(opts):
 
                                 # Wait here until this inimodel job is finished. Check every thirty seconds
                                 WaitForJob(inimodel_job, 30)
+                                if CheckForExit():
+                                    return
 
                             sgd_model_star = findOutputModelStar(inimodel_job)
                             if sgd_model_star is None:
@@ -2884,6 +2893,8 @@ def run_pipeline(opts):
 
                                 # Wait here until this Class2D job is finished. Check every thirty seconds
                                 WaitForJob(class3d_job, 30)
+                                if CheckForExit():
+                                    return
 
                             class3d_model_star = findOutputModelStar(class3d_job)
                             if class3d_model_star is None:
@@ -3033,7 +3044,7 @@ def main():
             RUNNING_FILE,
             "is already present: delete this file and make sure no other copy of this script is running. Exiting now ...",
         )
-        sys.exit(0)
+        return
 
     # Also make sure the preprocessing pipeliners are stopped before re-starting this script
     for checkfile in (
@@ -3046,7 +3057,7 @@ def main():
                 checkfile,
                 "is already present: delete this file and make sure no relion_pipeliner job is still running. Exiting now ...",
             )
-            sys.exit(0)
+            return
 
     if args.continue_:
         print(
