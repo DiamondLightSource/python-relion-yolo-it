@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 cryolo_relion_it.py
 ===================
@@ -271,7 +271,7 @@ import grp
 
 import gemmi
 
-from . import cryolo_external_job, cryolo_fine_tune_job
+from relion_yolo_it import cryolo_external_job, cryolo_fine_tune_job
 
 try:
     import tkinter as tk
