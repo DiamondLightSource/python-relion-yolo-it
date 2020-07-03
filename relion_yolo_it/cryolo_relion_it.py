@@ -820,7 +820,7 @@ class RelionItGui(object):
 
         row += 1
 
-        tk.Label(expt_frame, text=u"Pixel size (\u212B):").grid(row=row, sticky=tk.W)
+        tk.Label(expt_frame, text="Pixel size (\u212B):").grid(row=row, sticky=tk.W)
         self.angpix_var = tk.StringVar()  # for data binding
         self.angpix_entry = tk.Entry(expt_frame, textvariable=self.angpix_var)
         self.angpix_entry.grid(row=row, column=1, sticky=tk.W + tk.E)
@@ -829,7 +829,7 @@ class RelionItGui(object):
         row += 1
 
         tk.Label(
-            expt_frame, text=u"Exposure rate (e\u207B / \u212B\u00B2 / frame):"
+            expt_frame, text="Exposure rate (e\u207B / \u212B\u00B2 / frame):"
         ).grid(row=row, sticky=tk.W)
         self.exposure_entry = tk.Entry(expt_frame)
         self.exposure_entry.grid(row=row, column=1, sticky=tk.W + tk.E)
@@ -845,7 +845,7 @@ class RelionItGui(object):
 
         row = 0
 
-        tk.Label(particle_frame, text=u"Longest diameter (\u212B):").grid(
+        tk.Label(particle_frame, text="Longest diameter (\u212B):").grid(
             row=row, sticky=tk.W
         )
         self.particle_max_diam_var = tk.StringVar()  # for data binding
@@ -859,7 +859,7 @@ class RelionItGui(object):
 
         row += 1
 
-        tk.Label(particle_frame, text=u"Shortest diameter (\u212B):").grid(
+        tk.Label(particle_frame, text="Shortest diameter (\u212B):").grid(
             row=row, sticky=tk.W
         )
         self.particle_min_diam_entry = tk.Entry(particle_frame)
@@ -891,7 +891,7 @@ class RelionItGui(object):
 
         row += 1
 
-        tk.Label(particle_frame, text=u"Mask diameter (\u212B):").grid(
+        tk.Label(particle_frame, text="Mask diameter (\u212B):").grid(
             row=row, sticky=tk.W
         )
         self.mask_diameter_var = tk.StringVar()  # for data binding
@@ -910,7 +910,7 @@ class RelionItGui(object):
         self.box_size_entry = tk.Entry(particle_frame, textvariable=self.box_size_var)
         self.box_size_entry.grid(row=row, column=1, sticky=tk.W + tk.E)
         self.box_size_entry.insert(0, str(options.extract_boxsize))
-        self.box_size_in_angstrom = tk.Label(particle_frame, text=u"= NNN \u212B")
+        self.box_size_in_angstrom = tk.Label(particle_frame, text="= NNN \u212B")
         self.box_size_in_angstrom.grid(row=row, column=2, sticky=tk.W)
 
         row += 1
@@ -922,7 +922,7 @@ class RelionItGui(object):
         )
         self.extract_small_boxsize_entry.grid(row=row, column=1, sticky=tk.W + tk.E)
         self.extract_small_boxsize_entry.insert(0, str(options.extract_small_boxsize))
-        self.extract_angpix = tk.Label(particle_frame, text=u"= NNN \u212B/px")
+        self.extract_angpix = tk.Label(particle_frame, text="= NNN \u212B/px")
         self.extract_angpix.grid(row=row, column=2, sticky=tk.W)
 
         row += 1
@@ -1142,8 +1142,8 @@ class RelionItGui(object):
             except ValueError:
                 # Can't update any of the labels without angpix
                 self.mask_diameter_px.config(text="= NNN px")
-                self.box_size_in_angstrom.config(text=u"= NNN \u212B")
-                self.extract_angpix.config(text=u"= NNN \u212B/px")
+                self.box_size_in_angstrom.config(text="= NNN \u212B")
+                self.extract_angpix.config(text="= NNN \u212B/px")
                 return
             try:
                 mask_diameter = float(self.mask_diameter_entry.get())
@@ -1158,22 +1158,22 @@ class RelionItGui(object):
                 box_size = float(self.box_size_entry.get())
                 box_angpix = angpix * box_size
                 self.box_size_in_angstrom.config(
-                    text=u"= {:.1f} \u212B".format(box_angpix)
+                    text="= {:.1f} \u212B".format(box_angpix)
                 )
             except ValueError:
                 # Can't update these without the box size
-                self.box_size_in_angstrom.config(text=u"= NNN \u212B")
-                self.extract_angpix.config(text=u"= NNN \u212B/px")
+                self.box_size_in_angstrom.config(text="= NNN \u212B")
+                self.extract_angpix.config(text="= NNN \u212B/px")
                 return
             try:
                 extract_small_boxsize = float(self.extract_small_boxsize_entry.get())
                 small_box_angpix = box_angpix / extract_small_boxsize
                 self.extract_angpix.config(
-                    text=u"= {:.3f} \u212B/px".format(small_box_angpix)
+                    text="= {:.3f} \u212B/px".format(small_box_angpix)
                 )
             except (ValueError, ZeroDivisionError):
                 # Can't update the downscaled pixel size unless the downscaled box size is valid
-                self.extract_angpix.config(text=u"= NNN \u212B/px")
+                self.extract_angpix.config(text="= NNN \u212B/px")
 
         def update_box_sizes(*args_ignored, **kwargs_ignored):
             # Always activate entry boxes - either we're activating them anyway, or we need to edit the text.
@@ -2160,9 +2160,7 @@ def run_pipeline(opts):
             runjobs.append(autopick_job)
 
             #### Set up the Extract job
-            bin_corrected_box_exact = int(
-                opts.extract_boxsize / opts.motioncor_binning
-            )
+            bin_corrected_box_exact = int(opts.extract_boxsize / opts.motioncor_binning)
             bin_corrected_box_even = (
                 bin_corrected_box_exact + bin_corrected_box_exact % 2
             )

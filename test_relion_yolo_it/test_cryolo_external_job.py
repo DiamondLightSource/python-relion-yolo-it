@@ -72,21 +72,24 @@ class CryoloExternalJobTest(unittest.TestCase):
         cryolo_external_job.main()
 
         # Check results
-        mock_subprocess.run.assert_called_once_with([
-            "cryolo_predict.py",
-            "--conf",
-            "config.json",
-            "-i",
-            f"{self.test_dir}/External/job002/cryolo_input",
-            "-o",
-            f"{self.test_dir}/External/job002/gen_pick",
-            "--weights",
-            "path/to/cryolo/gmodel.h5",
-            "--gpu",
-            '"0 1"',
-            "--threshold",
-            "0.3",
-        ], check=True)
+        mock_subprocess.run.assert_called_once_with(
+            [
+                "cryolo_predict.py",
+                "--conf",
+                "config.json",
+                "-i",
+                f"{self.test_dir}/External/job002/cryolo_input",
+                "-o",
+                f"{self.test_dir}/External/job002/gen_pick",
+                "--weights",
+                "path/to/cryolo/gmodel.h5",
+                "--gpu",
+                '"0 1"',
+                "--threshold",
+                "0.3",
+            ],
+            check=True,
+        )
         assert os.path.isfile("coords_suffix_autopick.star")
         with open("coords_suffix_autopick.star") as f:
             contents = f.read().strip()
@@ -101,7 +104,7 @@ class CryoloExternalJobTest(unittest.TestCase):
         block = doc.sole_block()
         table = block.find("_rlnPipeLineNode", ["Name", "Type"])
         assert len(table) == 1
-        assert list(table[0]) == ['External/job002/coords_suffix_autopick.star', '2']
+        assert list(table[0]) == ["External/job002/coords_suffix_autopick.star", "2"]
 
         # Restore state
         os.chdir(self.test_dir)

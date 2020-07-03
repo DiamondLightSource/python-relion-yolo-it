@@ -160,12 +160,8 @@ def main():
 
 def run_cryolo_job(job_dir, command_list, pipeline_opts, wait_for_completion=True):
     """Run a cryolo job (submitting to the queue if requested) and optionally wait for completion"""
-    success_file = os.path.join(
-        job_dir, RELION_JOB_SUCCESS_FILENAME
-    )
-    failure_file = os.path.join(
-        job_dir, RELION_JOB_FAILURE_FILENAME
-    )
+    success_file = os.path.join(job_dir, RELION_JOB_SUCCESS_FILENAME)
+    failure_file = os.path.join(job_dir, RELION_JOB_FAILURE_FILENAME)
     if os.path.isfile(failure_file):
         print(f" cryolo_pipeline: Removing previous job failure file {failure_file}")
         os.remove(failure_file)
