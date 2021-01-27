@@ -26,11 +26,19 @@ setup(
     license="GPLv2",
     include_package_data=True,
     packages=find_packages(),
+
     scripts=[
         "relion_yolo_it/cryolo_relion_it.py",
         "relion_yolo_it/cryolo_external_job.py",
         "relion_yolo_it/cryolo_fine_tune_job.py",
     ],
+
+    entry_points = {
+        'zocalo.wrappers': [
+            'relion = relion_yolo_it.relion_zocalo_wrapper:RelionWrapper'
+        ]
+    },
+
     python_requires=">=3.6",
     setup_requires=setup_requirements,
     url="https://github.com/DiamondLightSource/python-relion-yolo-it",
