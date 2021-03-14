@@ -273,6 +273,9 @@ import gemmi
 
 from relion_yolo_it import cryolo_external_job, cryolo_fine_tune_job
 
+import mask_soft_edge_external_job
+import select_and_split_external_job
+
 try:
     import tkinter as tk
     import tkinter.messagebox
@@ -295,7 +298,7 @@ OPTIONS_FILE = "relion_it_options.py"
 class RelionItOptions(object):
     """
     Options for the relion_it pipeline setup script.
-    
+
     When initialised, this contains default values for all options. Call
     ``update_from()`` to override the defaults with a dictionary of new values.
     """
@@ -674,7 +677,7 @@ class RelionItOptions(object):
     def update_from(self, other):
         """
         Update this RelionItOptions object from a dictionary.
-        
+
         Special values (with names like '__xxx__') are removed, allowing this
         method to be given a dictionary containing the namespace from a script
         run with ``runpy`` (though beware: using runpy could be a serious
@@ -693,7 +696,7 @@ class RelionItOptions(object):
     def print_options(self, out_file=None):
         """
         Print the current options.
-        
+
         This method prints the options in the same format as they are read,
         allowing options to be written to a file and re-used.
 
@@ -1798,6 +1801,120 @@ def findBestClass(model_star_file, use_resol=True):
     return best_class, best_resol, model_star["model_general"]["rlnPixelSize"]
 
 
+# the model star file is used to find the number of classes, the data star file is passed to the
+# select_and_split External job
+def scheduleJobsFSC(model_star_file, data_star_file, inimodel_job, opts):
+    model_star = safe_load_star(model_star_file)
+    outjobs = []
+
+    fsc_files = ""
+
+    job_name = f"mask_soft_edge"
+    options = [
+        f"External executable: == python {mask_soft_edge_external_job.__file__}",
+        f"Param1 - label: == out_dir",
+        f"Param1 - value: == External/MaskSoftEdge",
+        f"Param2 - label: == box_size",
+        f"Param2 - value: == {opts.extract_boxsize}",
+    ]
+    mask_soft_job, already_had_it = addJob(
+        "External", job_name, SETUP_CHECK_FILE, options, alias=f"MaskSoftEdge"
+    )
+
+    outjobs.append(mask_soft_job)
+
+    for iclass in range(0, len(model_star["model_classes"]["rlnReferenceImage"])):
+        job_name = f"select_and_split_{iclass+1}"
+        modelreffilein = model_star["model_classes"]["rlnReferenceImage"][iclass]
+        options = [
+            f"External executable: == python {select_and_split_external_job.__file__}",
+            f"Param1 - label: == in_dir",
+            f"Param1 - value: == {inimodel_job}",
+            f"Param2 - label: == out_dir",
+            f"Param2 - value: == External/SelectAndSplit_{iclass+1}",
+            f"Param3 - label: == i",
+            f"Param3 - value: == {data_star_file}",
+            f"Param4 - label: == outfile",
+            f"Param4 - value: == particles_class{iclass+1}.star",
+            f"Param5 - label: == class_number",
+            f"Param5 - value: == {iclass+1}",
+        ]
+        select_split_job, already_had_it = addJob(
+            "External",
+            job_name,
+            SETUP_CHECK_FILE,
+            options,
+            alias=f"SelectAndSplit_{iclass+1}",
+        )
+
+        job_name = f"reconstruct_halves_{iclass+1}"
+        options = [
+            f"External executable: == python {reconstruct_halves_external_job.__file__}",
+            f"Param1 - label: == in_dir",
+            f"Param1 - value: == External/SelectAndSplit_{iclass+1}",
+            f"Param2 - label: == out_dir",
+            f"Param2 - value: == External/ReconstructHalves_{iclass+1}",
+            f"Param3 - label: == i",
+            f"Param3 - value: == particles_class{iclass+1}.star",
+            f"Param4 - label: == mask_diameter",
+            f"Param4 - value: == {opts.mask_diameter}",
+            f"Param5 - label: == class_number",
+            f"Param5 - value: == {iclass+1}",
+        ]
+        reconstruct_halves_job, already_had_it = addJob(
+            "External",
+            job_name,
+            SETUP_CHECK_FILE,
+            options,
+            alias=f"ReconstructHalves_{iclass+1}",
+        )
+
+        job_name = f"postprocessing_{iclass+1}"
+        options = [
+            f"Solvent mask: == External/MaskSoftEdge/mask_soft.mrc",
+            f"One of the 2 unfiltered half-maps: == External/ReconstructHalves_{iclass+1}/3d_half1_model{iclass+1}.mrc",
+            f"Calibrated pixel size (A) == 5.36",
+            f"Estimate B-factor automatically? == Yes",
+            f"Lowest resolution for auto-B fit (A): == 10",
+        ]
+
+        postprocess_job, already_had_it = addJob(
+            "PostProcess",
+            job_name,
+            SETUP_CHECK_FILE,
+            options,
+            alias=f"GetFSC_{iclass+1}",
+        )
+
+        outjobs.extend([select_split_job, reconstruct_halves_job, postprocess_job])
+
+        fsc_files += f" PostProcess/GetFSC_{iclass+1}/postprocess.star"
+
+    job_name = "fsc_fitting"
+    options = [
+        f"External executable: == python {fsc_fitting_external_job.__file__}",
+        f"Param1 - label: == i",
+        f"Param1 - value: == {fsc_files}",
+    ]
+    fsc_fitting_job, already_had_it = addJob(
+        "External", job_name, SETUP_CHECK_FILE, options, alias="FSCFitting"
+    )
+    outjobs.append(fsc_fitting_job)
+
+    return outjobs
+
+
+def findBestClassFSC(best_class_file, model_star_file):
+    with open(best_class_file, "r") as f:
+        class_index = int(f.readline())
+    model_star = safe_load_star(model_star_file)
+    best_class = model_star["model_classes"]["rlnReferenceImage"][class_index]
+    best_resol = float(
+        model_star["model_classes"]["rlnEstimatedResolution"][class_index]
+    )
+    return best_class, best_resol, model_star["model_general"]["rlnPixelSize"]
+
+
 def findOutputModelStar(job_dir):
     found = None
     try:
@@ -1815,10 +1932,27 @@ def findOutputModelStar(job_dir):
     return found
 
 
+def findOutputDataStar(job_dir):
+    found = None
+    try:
+        job_star = safe_load_star(
+            job_dir + "job_pipeline.star",
+            expected=["pipeline_output_edges", "rlnPipeLineEdgeToNode"],
+        )
+        for output_file in job_star["pipeline_output_edges"]["rlnPipeLineEdgeToNode"]:
+            if output_file.endswith("_data.star"):
+                found = output_file
+                break
+    except:
+        pass
+
+    return found
+
+
 def run_pipeline(opts):
     """
     Configure and run the RELION 3 pipeline with the given options.
-    
+
     Args:
         opts: options for the pipeline, as a RelionItOptions object.
     """
@@ -2735,6 +2869,7 @@ def run_pipeline(opts):
                                     return
 
                             sgd_model_star = findOutputModelStar(inimodel_job)
+                            sgd_data_star = findOutputDataStar(inimodel_job)
                             if sgd_model_star is None:
                                 print(
                                     " RELION_IT: Initial model generation "
@@ -2754,11 +2889,23 @@ def run_pipeline(opts):
                                 + opts.inimodel_nr_iter_inbetween
                                 + opts.inimodel_nr_iter_final
                             )
+
+                            ini_choose_jobs = scheduleJobsFSC(
+                                sgd_model_star, sgd_data_star, inimodel_job, opts
+                            )
+                            if not already_had_it:
+                                RunJobs(ini_choose_jobs, 1, 1, "INIMODEL")
+                                WaitForJob(ini_choose_jobs[-1], 30)
+
                             (
                                 best_inimodel_class,
                                 best_inimodel_resol,
                                 best_inimodel_angpix,
-                            ) = findBestClass(sgd_model_star, use_resol=True)
+                            ) = findBestClassFSC(
+                                os.path.join(ini_choose_jobs[-1], "BestClass.txt"),
+                                sgd_model_star,
+                            )
+
                             opts.class3d_reference = best_inimodel_class
                             opts.class3d_ref_is_correct_greyscale = True
                             opts.class3d_ref_is_ctf_corrected = True
@@ -2900,6 +3047,7 @@ def run_pipeline(opts):
                                     return
 
                             class3d_model_star = findOutputModelStar(class3d_job)
+                            class3d_data_star = findOutputDataStar(class3d_job)
                             if class3d_model_star is None:
                                 print(
                                     " RELION_IT: 3D Classification "
@@ -2978,7 +3126,7 @@ def run_pipeline(opts):
 def main():
     """
     Run the RELION 3 pipeline.
-    
+
     Options files given as command line arguments will be opened in order and
     used to update the default options.
     """
