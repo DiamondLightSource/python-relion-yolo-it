@@ -10,6 +10,7 @@ import os
 import os.path
 import shutil
 import time
+import subprocess
 
 import gemmi
 
@@ -29,21 +30,33 @@ def run_job(project_dir, job_dir, in_dir, starin, starout, args_list):
         raise ValueError(
             "Output file for external SelectAndSplit job must end with .star"
         )
-    command = "relion_star_handler"
-    options = f"--i {starin} --o {os.path.join(job_dir, starout)} --select rlnClassNumber {args.class_number}"
-    print(command + " " + options)
-    cmdcheck = os.system(command + " " + options)
-    if cmdcheck != 0:
-        raise Exception(
-            f"relion_star_handler {options} failed in select_and_split External job"
-        )
 
-    options = f"--i {os.path.join(job_dir, starout)} --o {os.path.join(job_dir, starout)} --split --random_order --nr_split 2"
-    cmdcheck = os.system(command + " " + options)
-    if cmdcheck != 0:
-        raise Exception(
-            f"relion_star_handler {options} failed in select_and_split External job"
-        )
+    command = [
+        "relion_star_handler",
+        "--i",
+        f"{starin}",
+        "--o",
+        f"{os.path.join(job_dir, starout)}",
+        "--select",
+        "rlnClassNumber",
+        f"{args.class_number}",
+    ]
+
+    result = subprocess.run(command, check=True)
+
+    command = [
+        "relion_star_handler",
+        "--i",
+        f"{os.path.join(job_dir, starout)}",
+        "--o",
+        f"{os.path.join(job_dir, starout)}",
+        "--split",
+        "--random_order",
+        "--nr_split",
+        "2",
+    ]
+
+    result = subprocess.run(command, check=True)
 
 
 def main():

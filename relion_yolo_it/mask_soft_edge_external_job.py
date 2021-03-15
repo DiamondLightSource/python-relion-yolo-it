@@ -9,6 +9,7 @@ import os
 import os.path
 import shutil
 import time
+import subprocess
 
 import gemmi
 
@@ -28,20 +29,30 @@ def run_job(project_dir, job_dir, args_list):
     os.chdir(job_dir)
 
     # need to remove the hard coding of outer_radius and width_soft_edge
-    command = "relion_mask_create"
-    options = f"--denovo true --box_size {args.box_size} --outer_radius 32"
-    cmdcheck = os.system(command + " " + options)
-    if cmdcheck != 0:
-        raise Exception(
-            f"relion_mask_create {options} failed in mask_soft_edge External job"
-        )
 
-    options = "--i mask.mrc --o mask_soft.mrc --width_soft_edge 5"
-    cmdcheck = os.system(command + " " + options)
-    if cmdcheck != 0:
-        raise Exception(
-            f"relion_mask_create {options} failed in mask_soft_edge External job"
-        )
+    command = [
+        "relion_mask_create",
+        "--denovo",
+        "true",
+        "--box_size",
+        f"{args.box_size}",
+        "--outer_radius",
+        "32",
+    ]
+
+    subprocess.run(command, check=True)
+
+    command = [
+        "relion_mask_create",
+        "--i",
+        "mask.mrc",
+        "--o",
+        "mask_soft.mrc",
+        "--width_soft_edge",
+        "5",
+    ]
+
+    subprocess.run(command, check=True)
 
 
 def main():

@@ -10,6 +10,7 @@ import os
 import os.path
 import shutil
 import time
+import subprocess
 
 import gemmi
 
@@ -31,7 +32,6 @@ def run_job(project_dir, job_dir, in_dir, starin, args_list):
             "Input file for external ReconstructHalves job must end with .star"
         )
 
-    command = "relion_reconstruct"
     split_starin = starin.split(".")
     splitname1 = ""
     splitname2 = ""
@@ -47,19 +47,34 @@ def run_job(project_dir, job_dir, in_dir, starin, args_list):
 
     model_half1 = f"3d_half1_model{args.class_number}.mrc"
     model_half2 = f"3d_half2_model{args.class_number}.mrc"
-    options = f"--i {os.path.join(in_dir, splitname1)} --o {os.path.join(job_dir, model_half1)} --ctf true --mask_diameter {args.mask_diam}"
-    cmdcheck = os.system(command + " " + options)
-    if cmdcheck != 0:
-        raise Exception(
-            f"relion_reconstruct {options} failed in reconstruct_halves External job"
-        )
 
-    options = f"--i {os.path.join(in_dir, splitname2)} --o {os.path.join(job_dir, model_half2)} --ctf true --mask_diameter {args.mask_diam}"
-    cmdcheck = os.system(command + " " + options)
-    if cmdcheck != 0:
-        raise Exception(
-            f"relion_reconstruct {options} failed in reconstruct_halves External job"
-        )
+    command = [
+        "relion_reconstruct",
+        "--i",
+        f"{os.path.join(in_dir, splitname1)}",
+        "--o",
+        f"{os.path.join(job_dir, model_half1)}",
+        "--ctf",
+        "true",
+        "--mask_diameter",
+        f"{args.mask_diam}",
+    ]
+
+    result = subprocess.run(command, check=True)
+
+    command = [
+        "relion_reconstruct",
+        "--i",
+        f"{os.path.join(in_dir, splitname2)}",
+        "--o",
+        f"{os.path.join(job_dir, model_half2)}",
+        "--ctf",
+        "true",
+        "--mask_diameter",
+        f"{args.mask_diam}",
+    ]
+
+    result = subprocess.run(command, check=True)
 
 
 def main():
