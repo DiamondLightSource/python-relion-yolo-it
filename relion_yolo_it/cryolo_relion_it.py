@@ -275,6 +275,8 @@ from relion_yolo_it import cryolo_external_job, cryolo_fine_tune_job
 
 import mask_soft_edge_external_job
 import select_and_split_external_job
+import reconstruct_halves_external_job
+import fsc_fitting_external_job
 
 try:
     import tkinter as tk
