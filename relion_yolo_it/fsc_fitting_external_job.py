@@ -43,7 +43,6 @@ def run_job(project_dir, out_dir, fscs_files, args_list):
         res = lin_interp(invres, fsc)
         resolutions.append(res)
 
-    print(resolutions)
     class_index = resolutions.index(min(resolutions))
 
     return class_index
