@@ -87,6 +87,8 @@ class MaskSoftEdgeExternalJobTest(unittest.TestCase):
                 f"{angpix}",
                 "--outer_radius",
                 f"{outer_radius}",
+                "--width_soft_edge",
+                "5",
             ],
             check=True,
         )

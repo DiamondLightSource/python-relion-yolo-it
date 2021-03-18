@@ -42,6 +42,8 @@ def run_job(project_dir, job_dir, args_list):
         f"{args.angpix}",
         "--outer_radius",
         f"{args.outer_radius}",
+        "--width_soft_edge",
+        "5",
     ]
 
     subprocess.run(command, check=True)
