@@ -21,6 +21,7 @@ RELION_JOB_SUCCESS_FILENAME = "RELION_JOB_EXIT_SUCCESS"
 def run_job(project_dir, job_dir, args_list):
     parser = argparse.ArgumentParser()
     parser.add_argument("--box_size", dest="box_size")
+    parser.add_argument("--outer_radius", dest="outer_radius")
     parser.add_argument(
         "--j", dest="threads", help="Number of threads to run (ignored)"
     )
@@ -37,7 +38,7 @@ def run_job(project_dir, job_dir, args_list):
         "--box_size",
         f"{args.box_size}",
         "--outer_radius",
-        "32",
+        f"{args.outer_radius}",
     ]
 
     subprocess.run(command, check=True)

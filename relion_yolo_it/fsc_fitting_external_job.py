@@ -39,13 +39,31 @@ def run_job(project_dir, out_dir, fscs_files, args_list):
         data_as_dict = json.loads(fsc_in.as_json())["fsc"]
         invres = [1 / x for x in data_as_dict["_rlnangstromresolution"]]
         fsc = data_as_dict["_rlnfouriershellcorrelationcorrected"]
-        res = fsc_res(invres, fsc, out_dir, i + 1)
+        # res = fsc_res(invres, fsc, out_dir, i + 1)
+        res = lin_interp(invres, fsc)
         resolutions.append(res)
 
     print(resolutions)
     class_index = resolutions.index(min(resolutions))
 
     return class_index
+
+
+def lin_interp(invres, fsc):
+    crossing_point = crossing_points(invres, fsc)[-1]
+    slope = (crossing_point[1][1] - crossing_point[0][1]) / (
+        crossing_point[1][0] - crossing_point[0][0]
+    )
+    constant = crossing_point[0][1] - slope * crossing_point[0][0]
+    return (0.5 - constant) / slope
+
+
+def crossing_points(invres, fsc):
+    points = []
+    for i in range(1, len(invres)):
+        if fsc[i] < 0.5 and fsc[i - 1] > 0.5:
+            points.append(((invres[i - 1], fsc[i - 1]), (invres[i], fsc[i])))
+    return points
 
 
 def fsc_res(invres, fsc, out_dir, iclass):
@@ -60,8 +78,37 @@ def fsc_res(invres, fsc, out_dir, iclass):
     fitrange = np.linspace(0, invres[-1])
     fitline = [fitfcn(x, fitres[0][0], fitres[0][1]) for x in fitrange]
 
-    plt.plot(invres, fsc, "o")
-    plt.plot(fitrange, fitline, "--")
+    subpoints = [(p1, p2) for p1, p2 in zip(invres, fsc) if p2 < 0.7 and p2 > 0.3]
+    subinvres = [p[0] for p in subpoints]
+    subfsc = [p[1] for p in subpoints]
+
+    def linfit(x, a, b, eps=0):
+        return a + b * x - eps
+
+    linfitres = curve_fit(linfit, subinvres, subfsc, p0=[0, 0])
+
+    linfitrange = np.linspace(subinvres[0], subinvres[-1])
+    linfitline = [linfit(x, linfitres[0][0], linfitres[0][1]) for x in linfitrange]
+
+    plt.rc("font", **{"family": "serif", "serif": ["Computer Modern"], "size": 12})
+    plt.rc("text", usetex=True)
+    plt.rc("axes", linewidth=0.5)
+    plt.figure(figsize=((4.5, 4.5 / 1.618)))
+
+    fig, axs = plt.subplots(2)
+
+    axs[0].plot(invres, fsc, "--")
+    axs[0].plot(fitrange, fitline, ":")
+    axs[0].axhspan(0.3, 0.7, alpha=0.5, lw=0)
+    axs[0].axvspan(subinvres[0], subinvres[-1], alpha=0.5, lw=0)
+    axs[0].set_ylabel("FSC")
+
+    axs[1].plot(subinvres, subfsc, "o")
+    axs[1].plot(linfitrange, linfitline, "--")
+    axs[1].set_xlabel("Resolution $\left( \mathrm{\AA}^{-1} \\right)$")
+    axs[1].set_ylabel("FSC")
+
+    plt.tight_layout()
     plt.savefig(out_dir + f"fsc_curve{iclass}.pdf")
     plt.close()
 

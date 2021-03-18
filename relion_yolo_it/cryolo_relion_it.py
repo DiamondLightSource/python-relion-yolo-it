@@ -1805,11 +1805,16 @@ def findBestClass(model_star_file, use_resol=True):
 
 # the model star file is used to find the number of classes, the data star file is passed to the
 # select_and_split External job
-def scheduleJobsFSC(model_star_file, data_star_file, inimodel_job, opts):
+def scheduleJobsFSC(
+    model_star_file, data_star_file, inimodel_job, opts, curr_angpix, curr_boxsize
+):
     model_star = safe_load_star(model_star_file)
     outjobs = []
 
     fsc_files = ""
+
+    # calculate a mask radius that is 0.98 of that used in the reconstruct_halves job
+    mask_outer_radius = math.floor(0.98 * opts.mask_diameter / (2 * curr_angpix))
 
     job_name = f"mask_soft_edge"
     options = [
@@ -1817,7 +1822,9 @@ def scheduleJobsFSC(model_star_file, data_star_file, inimodel_job, opts):
         f"Param1 - label: == out_dir",
         f"Param1 - value: == External/MaskSoftEdge",
         f"Param2 - label: == box_size",
-        f"Param2 - value: == {opts.extract_boxsize}",
+        f"Param2 - value: == {curr_boxsize}",
+        f"Param3 - label: == outer_radius",
+        f"Param3 - value: == {mask_outer_radius}",
     ]
     mask_soft_job, already_had_it = addJob(
         "External", job_name, SETUP_CHECK_FILE, options, alias=f"MaskSoftEdge"
@@ -2324,6 +2331,15 @@ def run_pipeline(opts):
                             opts.extract_small_boxsize
                         )
                     )
+                    curr_angpix = (
+                        opts.angpix
+                        * opts.motioncor_binning
+                        * (opts.extract_boxsize / opts.extract_small_boxsize)
+                    )
+                    curr_boxsize = opts.extract_small_boxsize
+                else:
+                    curr_angpix = opts.angpix * opts.motioncor_binning
+                    curr_boxsize = bin_corrected_box_even
             else:
                 if opts.extract2_downscale:
                     extract_options.append("Rescale particles? == Yes")
@@ -2332,6 +2348,15 @@ def run_pipeline(opts):
                             opts.extract2_small_boxsize
                         )
                     )
+                    curr_angpix = (
+                        opts.angpix
+                        * opts.motioncor_binning
+                        * (opts.extract_boxsize / opts.extract2_small_boxsize)
+                    )
+                    curr_boxsize = opts.extract2_small_boxsize
+                else:
+                    curr_angpix = opts.angpix * opts.motioncor_binning
+                    curr_boxsize = bin_corrected_box_even
 
             if opts.extract_submit_to_queue:
                 extract_options.extend(queue_options)
@@ -2893,7 +2918,12 @@ def run_pipeline(opts):
                             )
 
                             ini_choose_jobs = scheduleJobsFSC(
-                                sgd_model_star, sgd_data_star, inimodel_job, opts
+                                sgd_model_star,
+                                sgd_data_star,
+                                inimodel_job,
+                                opts,
+                                curr_angpix,
+                                curr_boxsize,
                             )
                             if not already_had_it:
                                 RunJobs(ini_choose_jobs, 1, 1, "INIMODEL")
