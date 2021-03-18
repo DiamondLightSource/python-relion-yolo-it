@@ -21,6 +21,7 @@ RELION_JOB_SUCCESS_FILENAME = "RELION_JOB_EXIT_SUCCESS"
 def run_job(project_dir, job_dir, args_list):
     parser = argparse.ArgumentParser()
     parser.add_argument("--box_size", dest="box_size")
+    parser.add_argument("--angpix", dest="angpix")
     parser.add_argument("--outer_radius", dest="outer_radius")
     parser.add_argument(
         "--j", dest="threads", help="Number of threads to run (ignored)"
@@ -37,20 +38,10 @@ def run_job(project_dir, job_dir, args_list):
         "true",
         "--box_size",
         f"{args.box_size}",
+        "--angpix",
+        f"{args.angpix}",
         "--outer_radius",
         f"{args.outer_radius}",
-    ]
-
-    subprocess.run(command, check=True)
-
-    command = [
-        "relion_mask_create",
-        "--i",
-        "mask.mrc",
-        "--o",
-        "mask_soft.mrc",
-        "--width_soft_edge",
-        "5",
     ]
 
     subprocess.run(command, check=True)

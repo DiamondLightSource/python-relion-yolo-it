@@ -54,6 +54,8 @@ class MaskSoftEdgeExternalJobTest(unittest.TestCase):
         ini_doc.write_file(ini_star_file)
 
         box_size = 96
+        angpix = 1
+        outer_radius = 32
 
         job_dir = "External/job003"
 
@@ -67,6 +69,10 @@ class MaskSoftEdgeExternalJobTest(unittest.TestCase):
             job_dir,
             "--box_size",
             f"{box_size}",
+            "--angpix",
+            f"{angpix}",
+            "--outer_radius",
+            f"{outer_radius}",
         ]
         mask_soft_edge_external_job.main()
 
@@ -77,26 +83,15 @@ class MaskSoftEdgeExternalJobTest(unittest.TestCase):
                 "true",
                 "--box_size",
                 f"{box_size}",
+                "--angpix",
+                f"{angpix}",
                 "--outer_radius",
-                "32",
+                f"{outer_radius}",
             ],
             check=True,
         )
 
-        call2 = mock.call(
-            [
-                "relion_mask_create",
-                "--i",
-                "mask.mrc",
-                "--o",
-                "mask_soft.mrc",
-                "--width_soft_edge",
-                "5",
-            ],
-            check=True,
-        )
-
-        mock_subprocess.run.assert_has_calls([call1, call2])
+        mock_subprocess.run.assert_has_calls([call1])
 
         assert os.path.isfile("RELION_JOB_EXIT_SUCCESS")
 

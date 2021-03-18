@@ -1823,8 +1823,10 @@ def scheduleJobsFSC(
         f"Param1 - value: == External/MaskSoftEdge",
         f"Param2 - label: == box_size",
         f"Param2 - value: == {curr_boxsize}",
-        f"Param3 - label: == outer_radius",
-        f"Param3 - value: == {mask_outer_radius}",
+        f"Param3 - label: == angpix",
+        f"Param3 - value: == {curr_angpix}",
+        f"Param4 - label: == outer_radius",
+        f"Param4 - value: == {mask_outer_radius}",
     ]
     mask_soft_job, already_had_it = addJob(
         "External", job_name, SETUP_CHECK_FILE, options, alias=f"MaskSoftEdge"
@@ -1880,9 +1882,9 @@ def scheduleJobsFSC(
 
         job_name = f"postprocessing_{iclass+1}"
         options = [
-            f"Solvent mask: == External/MaskSoftEdge/mask_soft.mrc",
+            f"Solvent mask: == External/MaskSoftEdge/mask.mrc",
             f"One of the 2 unfiltered half-maps: == External/ReconstructHalves_{iclass+1}/3d_half1_model{iclass+1}.mrc",
-            f"Calibrated pixel size (A) == 5.36",
+            f"Calibrated pixel size (A) == {curr_angpix}",
             f"Estimate B-factor automatically? == Yes",
             f"Lowest resolution for auto-B fit (A): == 10",
         ]
