@@ -64,7 +64,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--in_dir", dest="in_dir", help="Input directory name")
     parser.add_argument("--out_dir", dest="out_dir", help="Output directory name")
-    parser.add_argument("--i", dest="starin", help="Input star file name")
+    parser.add_argument("--in_mics", dest="starin", help="Input star file name")
     parser.add_argument("--outfile", dest="starout", help="Output star file name")
     parser.add_argument("--o", help="Output star file name")
     parser.add_argument(

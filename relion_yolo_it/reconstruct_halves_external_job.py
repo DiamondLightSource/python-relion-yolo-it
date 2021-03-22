@@ -88,6 +88,11 @@ def main():
     )
     parser.add_argument("--i", dest="starin", help="Input star file name")
     parser.add_argument(
+        "--in_mics",
+        dest="mics_in",
+        help="Input star file name (this one is just used to help Relion keep track of inputs)",
+    )
+    parser.add_argument(
         "--pipeline_control", help="Directory for pipeline control files"
     )
     known_args, other_args = parser.parse_known_args()

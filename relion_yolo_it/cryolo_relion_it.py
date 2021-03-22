@@ -1839,16 +1839,15 @@ def scheduleJobsFSC(
         modelreffilein = model_star["model_classes"]["rlnReferenceImage"][iclass]
         options = [
             f"External executable: == python {select_and_split_external_job.__file__}",
+            f"Input micrographs:  == {data_star_file}",
             f"Param1 - label: == in_dir",
             f"Param1 - value: == {inimodel_job}",
             f"Param2 - label: == out_dir",
             f"Param2 - value: == External/SelectAndSplit_{iclass+1}",
-            f"Param3 - label: == i",
-            f"Param3 - value: == {data_star_file}",
-            f"Param4 - label: == outfile",
-            f"Param4 - value: == particles_class{iclass+1}.star",
-            f"Param5 - label: == class_number",
-            f"Param5 - value: == {iclass+1}",
+            f"Param3 - label: == outfile",
+            f"Param3 - value: == particles_class{iclass+1}.star",
+            f"Param4 - label: == class_number",
+            f"Param4 - value: == {iclass+1}",
         ]
         select_split_job, already_had_it = addJob(
             "External",
@@ -1861,6 +1860,7 @@ def scheduleJobsFSC(
         job_name = f"reconstruct_halves_{iclass+1}"
         options = [
             f"External executable: == python {reconstruct_halves_external_job.__file__}",
+            f"Input micrographs:  == External/SelectAndSplit_{iclass+1}/particles_class{iclass+1}.star",
             f"Param1 - label: == in_dir",
             f"Param1 - value: == External/SelectAndSplit_{iclass+1}",
             f"Param2 - label: == out_dir",

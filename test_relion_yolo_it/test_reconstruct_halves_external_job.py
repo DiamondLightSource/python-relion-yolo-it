@@ -78,6 +78,8 @@ class ReconstructHalvesExternalJobTest(unittest.TestCase):
         sys.argv[1:] = [
             "--out_dir",
             job_dir,
+            "--in_mics",
+            job_dir + "/particles_class1.star",
             "--in_dir",
             select_job_dir,
             "--i",

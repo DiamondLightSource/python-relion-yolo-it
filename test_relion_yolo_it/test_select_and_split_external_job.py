@@ -65,7 +65,7 @@ class SelectAndSplitExternalJobTest(unittest.TestCase):
             ini_job_dir,
             "--out_dir",
             job_dir,
-            "--i",
+            "--in_mics",
             ini_star_file,
             "--outfile",
             "particles_class1.star",
