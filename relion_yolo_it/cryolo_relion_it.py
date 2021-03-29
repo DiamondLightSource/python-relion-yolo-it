@@ -643,6 +643,8 @@ class RelionItOptions(object):
     inimodel_sigmafudge_halflife = -1
     # Additional arguments to pass to relion_refine (skip annealing to get rid of outlier particles)
     inimodel_other_args = " --sgd_skip_anneal "
+    # Option to use FSC based criterion for selecting the best SGD initial model
+    use_fsc_criterion = False
 
     ### Cluster submission settings
     # Name of the queue to which to submit the job
@@ -2919,26 +2921,34 @@ def run_pipeline(opts):
                                 + opts.inimodel_nr_iter_final
                             )
 
-                            ini_choose_jobs = scheduleJobsFSC(
-                                sgd_model_star,
-                                sgd_data_star,
-                                inimodel_job,
-                                opts,
-                                curr_angpix,
-                                curr_boxsize,
-                            )
-                            if not already_had_it:
-                                RunJobs(ini_choose_jobs, 1, 1, "INIMODEL")
-                                WaitForJob(ini_choose_jobs[-1], 30)
+                            if opts.use_fsc_criterion:
+                                ini_choose_jobs = scheduleJobsFSC(
+                                    sgd_model_star,
+                                    sgd_data_star,
+                                    inimodel_job,
+                                    opts,
+                                    curr_angpix,
+                                    curr_boxsize,
+                                )
+                                if not already_had_it:
+                                    RunJobs(ini_choose_jobs, 1, 1, "INIMODEL")
+                                    WaitForJob(ini_choose_jobs[-1], 30)
 
-                            (
-                                best_inimodel_class,
-                                best_inimodel_resol,
-                                best_inimodel_angpix,
-                            ) = findBestClassFSC(
-                                os.path.join(ini_choose_jobs[-1], "BestClass.txt"),
-                                sgd_model_star,
-                            )
+                                (
+                                    best_inimodel_class,
+                                    best_inimodel_resol,
+                                    best_inimodel_angpix,
+                                ) = findBestClassFSC(
+                                    os.path.join(ini_choose_jobs[-1], "BestClass.txt"),
+                                    sgd_model_star,
+                                )
+
+                            else:
+                                (
+                                    best_inimodel_class,
+                                    best_inimodel_resol,
+                                    best_inimodel_angpix,
+                                ) = findBestClass(sgd_model_star, use_resol=True)
 
                             opts.class3d_reference = best_inimodel_class
                             opts.class3d_ref_is_correct_greyscale = True
