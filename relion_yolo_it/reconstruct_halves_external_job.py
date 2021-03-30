@@ -5,15 +5,9 @@ External job
 """
 
 import argparse
-import json
 import os
 import os.path
-import shutil
-import time
 import subprocess
-
-import gemmi
-
 
 RELION_JOB_FAILURE_FILENAME = "RELION_JOB_EXIT_FAILURE"
 RELION_JOB_SUCCESS_FILENAME = "RELION_JOB_EXIT_SUCCESS"
@@ -60,7 +54,7 @@ def run_job(project_dir, job_dir, in_dir, starin, args_list):
         f"{args.mask_diam}",
     ]
 
-    result = subprocess.run(command, check=True)
+    subprocess.run(command, check=True)
 
     command = [
         "relion_reconstruct",
@@ -74,7 +68,7 @@ def run_job(project_dir, job_dir, in_dir, starin, args_list):
         f"{args.mask_diam}",
     ]
 
-    result = subprocess.run(command, check=True)
+    subprocess.run(command, check=True)
 
 
 def main():

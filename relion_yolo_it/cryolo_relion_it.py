@@ -1838,7 +1838,7 @@ def scheduleJobsFSC(
 
     for iclass in range(0, len(model_star["model_classes"]["rlnReferenceImage"])):
         job_name = f"select_and_split_{iclass+1}"
-        modelreffilein = model_star["model_classes"]["rlnReferenceImage"][iclass]
+        # modelreffilein = model_star["model_classes"]["rlnReferenceImage"][iclass]
         options = [
             f"External executable: == python {select_and_split_external_job.__file__}",
             f"Input micrographs:  == {data_star_file}",
@@ -1939,7 +1939,7 @@ def findOutputModelStar(job_dir):
             if output_file.endswith("_model.star"):
                 found = output_file
                 break
-    except:
+    except Exception:
         pass
 
     return found
@@ -1956,7 +1956,7 @@ def findOutputDataStar(job_dir):
             if output_file.endswith("_data.star"):
                 found = output_file
                 break
-    except:
+    except Exception:
         pass
 
     return found

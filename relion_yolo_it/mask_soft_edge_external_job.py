@@ -4,14 +4,9 @@ External job for making a mask de novo with a soft edge
 """
 
 import argparse
-import json
 import os
 import os.path
-import shutil
-import time
 import subprocess
-
-import gemmi
 
 
 RELION_JOB_FAILURE_FILENAME = "RELION_JOB_EXIT_FAILURE"

@@ -4,7 +4,6 @@ import shutil
 import sys
 import tempfile
 import unittest
-from unittest import mock
 
 import gemmi
 
@@ -21,7 +20,7 @@ class ReconstructHalvesExternalJobTest(unittest.TestCase):
         os.chdir(self.orig_dir)
         shutil.rmtree(self.test_dir)
 
-    @mock.patch("relion_yolo_it.reconstruct_halves_external_job.subprocess")
+    @unittest.mock.patch("relion_yolo_it.reconstruct_halves_external_job.subprocess")
     def test_main(self, mock_subprocess):
         # Prepare things
         config_file = "example_config.json"
@@ -91,7 +90,7 @@ class ReconstructHalvesExternalJobTest(unittest.TestCase):
         ]
         reconstruct_halves_external_job.main()
 
-        call1 = mock.call(
+        call1 = unittest.mock.call(
             [
                 "relion_reconstruct",
                 "--i",
@@ -106,7 +105,7 @@ class ReconstructHalvesExternalJobTest(unittest.TestCase):
             check=True,
         )
 
-        call2 = mock.call(
+        call2 = unittest.mock.call(
             [
                 "relion_reconstruct",
                 "--i",

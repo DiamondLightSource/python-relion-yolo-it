@@ -5,14 +5,9 @@ into two random halves
 """
 
 import argparse
-import json
 import os
 import os.path
-import shutil
-import time
 import subprocess
-
-import gemmi
 
 
 RELION_JOB_FAILURE_FILENAME = "RELION_JOB_EXIT_FAILURE"
@@ -42,7 +37,7 @@ def run_job(project_dir, job_dir, in_dir, starin, starout, args_list):
         f"{args.class_number}",
     ]
 
-    result = subprocess.run(command, check=True)
+    subprocess.run(command, check=True)
 
     command = [
         "relion_star_handler",
@@ -56,7 +51,7 @@ def run_job(project_dir, job_dir, in_dir, starin, starout, args_list):
         "2",
     ]
 
-    result = subprocess.run(command, check=True)
+    subprocess.run(command, check=True)
 
 
 def main():

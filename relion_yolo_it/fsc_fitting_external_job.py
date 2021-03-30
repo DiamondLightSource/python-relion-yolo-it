@@ -7,8 +7,6 @@ import argparse
 import json
 import os
 import os.path
-import shutil
-import time
 
 import gemmi
 
@@ -22,7 +20,6 @@ def run_job(project_dir, out_dir, fscs_files, args_list):
     parser.add_argument(
         "--j", dest="threads", help="Number of threads to run (ignored)"
     )
-    args = parser.parse_args(args_list)
 
     resolutions = []
 
