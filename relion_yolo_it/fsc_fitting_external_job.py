@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 External job for fitting FSC curves and finding the value at which they cross 0.5
 """
@@ -39,18 +39,19 @@ def run_job(project_dir, out_dir, fscs_files, args_list):
 
 
 def lin_interp(invres, fsc):
-    crossing_point = crossing_points(invres, fsc)[-1]
-    slope = (crossing_point[1][1] - crossing_point[0][1]) / (
-        crossing_point[1][0] - crossing_point[0][0]
+    cpoints = crossing_points(invres, fsc)
+    last_crossing_point = cpoints[-1]
+    slope = (last_crossing_point[1][1] - last_crossing_point[0][1]) / (
+        last_crossing_point[1][0] - last_crossing_point[0][0]
     )
-    constant = crossing_point[0][1] - slope * crossing_point[0][0]
+    constant = last_crossing_point[0][1] - slope * last_crossing_point[0][0]
     return (0.5 - constant) / slope
 
 
 def crossing_points(invres, fsc):
     points = []
     for i in range(1, len(invres)):
-        if fsc[i] < 0.5 and fsc[i - 1] > 0.5:
+        if fsc[i] <= 0.5 and fsc[i - 1] >= 0.5:
             points.append(((invres[i - 1], fsc[i - 1]), (invres[i], fsc[i])))
     return points
 

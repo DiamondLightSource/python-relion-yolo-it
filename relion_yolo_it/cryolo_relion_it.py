@@ -1820,7 +1820,7 @@ def scheduleJobsFSC(
 
     job_name = f"mask_soft_edge"
     options = [
-        f"External executable: == python {mask_soft_edge_external_job.__file__}",
+        f"External executable: == {mask_soft_edge_external_job.__file__}",
         f"Param1 - label: == out_dir",
         f"Param1 - value: == External/MaskSoftEdge",
         f"Param2 - label: == box_size",
@@ -1838,9 +1838,8 @@ def scheduleJobsFSC(
 
     for iclass in range(0, len(model_star["model_classes"]["rlnReferenceImage"])):
         job_name = f"select_and_split_{iclass+1}"
-        # modelreffilein = model_star["model_classes"]["rlnReferenceImage"][iclass]
         options = [
-            f"External executable: == python {select_and_split_external_job.__file__}",
+            f"External executable: == {select_and_split_external_job.__file__}",
             f"Input micrographs:  == {data_star_file}",
             f"Param1 - label: == in_dir",
             f"Param1 - value: == {inimodel_job}",
@@ -1861,7 +1860,7 @@ def scheduleJobsFSC(
 
         job_name = f"reconstruct_halves_{iclass+1}"
         options = [
-            f"External executable: == python {reconstruct_halves_external_job.__file__}",
+            f"External executable: == {reconstruct_halves_external_job.__file__}",
             f"Input micrographs:  == External/SelectAndSplit_{iclass+1}/particles_class{iclass+1}.star",
             f"Param1 - label: == in_dir",
             f"Param1 - value: == External/SelectAndSplit_{iclass+1}",
@@ -1905,9 +1904,11 @@ def scheduleJobsFSC(
 
     job_name = "fsc_fitting"
     options = [
-        f"External executable: == python {fsc_fitting_external_job.__file__}",
+        f"External executable: == {fsc_fitting_external_job.__file__}",
         f"Param1 - label: == i",
         f"Param1 - value: == {fsc_files}",
+        f"Param2 - label: == out_dir",
+        f"Param2 - value: == External/FSCFitting",
     ]
     fsc_fitting_job, already_had_it = addJob(
         "External", job_name, SETUP_CHECK_FILE, options, alias="FSCFitting"

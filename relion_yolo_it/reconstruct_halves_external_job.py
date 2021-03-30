@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 External job for running relion_reconstruct on each random half from select_and_split 
 External job 

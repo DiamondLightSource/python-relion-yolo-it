@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 External job to select the micrographs for a chosen class and then split 
 into two random halves
